@@ -47,18 +47,25 @@ public class MainActivity extends ListActivity {
         historyList=new ArrayList<String>();
     }
 
+    private void onBackButtonClick(){
+        //todo, if history is empty, isInitialList is true
+    }
+
+
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         //super.onListItemClick(l, v, position, id);
         String item=currentList.get(position);
         if(isInitialList){
+
             if(item.equalsIgnoreCase("New")){
                 //todo go to editor, clear historylist
             }else if(item.equalsIgnoreCase("Favorites")){
 
             }else if(item.equalsIgnoreCase("Browse Directories")){
 
+                //todo root list and external storage
             }else if(item.equalsIgnoreCase("Recent Directories")){
 
             }else if(item.equalsIgnoreCase("Recent Files")){
@@ -93,7 +100,7 @@ public class MainActivity extends ListActivity {
     }
 
     class NavigationListAdapter extends ArrayAdapter<String> {
-        public NavigationListAdapter(Context context, int resource, int textViewResourceId, File[] objects) {
+        public NavigationListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
             super(context, resource, textViewResourceId, objects);
         }
 
@@ -103,13 +110,20 @@ public class MainActivity extends ListActivity {
                     (Context.LAYOUT_INFLATER_SERVICE);
             View row= inflater.inflate(R.layout.list_item,null,false);
             TextView textview= (TextView) row.findViewById(R.id.itemView);
-            textview.setText(MainActivity.this.currDirList[position].getName());
-            textview.setTextColor(Color.BLACK);
-            if(!MainActivity.this.currDirList[position].canWrite()){
-                if(MainActivity.this.currDirList[position].canRead()){
-                    textview.setTypeface(null, Typeface.ITALIC);
-                }else{
-                    textview.setTextColor(Color.GRAY);
+            String currentFileName=MainActivity.this.currentList.get(position);
+            if(isInitialList) {
+                textview.setText(currentFileName);
+                textview.setTextColor(Color.BLACK);
+            }else{
+                File currentFile= new File(currentFileName);
+                textview.setText(currentFile.getName());
+                textview.setTextColor(Color.BLACK);
+                if(!currentFile.canWrite()){
+                    if(currentFile.canRead()){
+                        textview.setTypeface(null, Typeface.ITALIC);
+                    }else{
+                        textview.setTextColor(Color.GRAY);
+                    }
                 }
             }
             return row;

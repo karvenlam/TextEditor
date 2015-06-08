@@ -5,4 +5,7 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_editor">EditorActivity</string>
     <string name="title_activity_list">ListActivity</string>
+
+
+    <string name="favorites_file">com.ravenlamb.android.texteditor.FAVORITES_FILE</string>
 </resources>
