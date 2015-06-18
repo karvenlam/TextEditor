@@ -2,12 +2,15 @@ package com.ravenlamb.android.texteditor;
 
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,6 +33,7 @@ public class MainActivity extends ListActivity {
     ArrayList<String> initialList;
     ArrayList<String> currentList;
     ArrayList<String> historyList;//keep the directory path it is displaying
+    ArrayAdapter<String> fileListAdapter;
 
     boolean isInitialList=true;
 
@@ -104,7 +108,64 @@ public class MainActivity extends ListActivity {
         }else
         {
             String currentFilePath=item;
-            historyList.add(currentFilePath);
+            try {
+                File currFile=new File(item);
+                if(!currFile.canRead()){
+                    Toast.makeText(this,"File is not readable",Toast.LENGTH_SHORT).show();
+                }else if(currFile.isDirectory()){
+                    processNewDirectory(item);
+
+                }else if(currFile.isFile()){
+
+//                Uri returnUri = returnIntent.getData();
+//                String mimeType = getContentResolver().getType(returnUri);
+                    //todo: need to make sure file is not binary
+                    String mimeType = getContentResolver().getType(Uri.fromFile(currFile));
+                    Toast.makeText(this,Uri.fromFile(currFile).toString()+" is a "+mimeType+" file",Toast.LENGTH_LONG).show();
+                    addRecentDirectory(currFile.getPath());
+                    Intent intent2= new Intent(this, EditorActivity.class);
+                    intent2.putExtra(DisplayList.FILESTR, currentFilePath);
+                    startActivity(intent2);
+                }
+            }catch (IndexOutOfBoundsException ioobe){
+                Log.e(TAG, "onChildClick IndexOutOfBoundException");
+            }catch (Exception e){
+                Log.e(TAG,"onChildClick Exception" );
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void processNewDirectory(String filePath){
+        historyList.add(filePath);
+        //historyIndex++;
+        refreshNavigationList(filePath);
+    }
+
+    private void refreshNavigationList(String dirPath){
+
+        //if(historyIndex>1){
+        if(historyList.size()>1){
+            backButton.setEnabled(true);
+        }else
+        {
+            backButton.setEnabled(false);
+        }
+        try{
+            File currFile=new File(dirPath);
+            File[] currDirList = currFile.listFiles();
+//            currDirListStr=new String[currDirList.length];
+            currentList=new ArrayList<String>();
+            for(int i=0;i<currDirList.length;i++){
+                currentList.add(currDirList[i].getAbsolutePath());
+            }
+            //fileListAdapter=new ArrayAdapter<String>(this,R.layout.list_item, R.id.itemView,currDirListStr);
+            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, (String[])currentList.toArray());
+            setListAdapter(fileListAdapter);
+            setTitle(currFile.getAbsolutePath());
+        }catch (Exception e){
+            e.printStackTrace();
+
         }
     }
 
