@@ -3,12 +3,12 @@ package com.ravenlamb.android.texteditor;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,7 +23,6 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 
 public class MainActivity extends ListActivity {
@@ -86,7 +85,7 @@ public class MainActivity extends ListActivity {
 //            Environment.DIRECTORY_MUSIC, Environment.DIRECTORY_PICTURES, Environment.DIRECTORY_PODCASTS
 //            Environment.DIRECTORY_RINGTONES
                     //Toast.makeText(this, "external storage is readable", Toast.LENGTH_SHORT).show();
-                    if(Build.VERSION.SDK_INT >=19){
+                     if(Build.VERSION.SDK_INT >=19){
                         currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
                         //externalPublic.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
                     }
@@ -122,7 +121,7 @@ public class MainActivity extends ListActivity {
                     //todo: need to make sure file is not binary
                     String mimeType = getContentResolver().getType(Uri.fromFile(currFile));
                     Toast.makeText(this,Uri.fromFile(currFile).toString()+" is a "+mimeType+" file",Toast.LENGTH_LONG).show();
-                    addRecentDirectory(currFile.getPath());
+                    addRecentFileDirectory(currFile);
                     Intent intent2= new Intent(this, EditorActivity.class);
                     intent2.putExtra(DisplayList.FILESTR, currentFilePath);
                     startActivity(intent2);
@@ -167,6 +166,91 @@ public class MainActivity extends ListActivity {
             e.printStackTrace();
 
         }
+    }
+
+
+//    private void addRecentFileDirectory(File newRecentFile){
+//
+//        String newRecentDir=newRecentFile.getParent();
+//        SharedPreferences sharedPrefDir = getSharedPreferences(getString(R.string.recent_directories_file), Context.MODE_PRIVATE);
+//        int num_recent=getResources().getInteger(R.integer.num_recent);
+//        String tempStr="";
+//        ArrayList<String> tempRecent=new ArrayList<String>(num_recent);
+//        for(int i=0;i<num_recent;i++){
+//            tempStr = sharedPrefDir.getString(getString(R.string.recent_directories_key)+i,"");
+//            if(tempStr.length()>0){
+//                tempRecent.add(tempStr);
+//            }
+//        }
+//        if(tempRecent.indexOf(newRecentDir)>=0){
+//            tempRecent.remove(newRecentDir);
+//            tempRecent.add(0,newRecentDir);
+//        }else{
+//            tempRecent.remove(tempRecent.size()-1);
+//            tempRecent.add(0,newRecentDir);
+//        }
+//        SharedPreferences.Editor sharedPrefDirEdit = sharedPrefDir.edit();
+//        for(int i=0;i<tempRecent.size() && i<num_recent;i++){
+//            sharedPrefDirEdit.putString(getString(R.string.recent_directories_key)+i,tempRecent.get(i));
+//        }
+//        sharedPrefDirEdit.commit();
+//        // add recent file
+//        String newRecentFileStr=newRecentFile.getAbsolutePath();
+//        SharedPreferences sharedPrefFile = getSharedPreferences(getString(R.string.recent_files_file), Context.MODE_PRIVATE);
+//        tempStr="";
+//        tempRecent=new ArrayList<String>(num_recent);
+//        for(int i=0;i<num_recent;i++){
+//            tempStr = sharedPrefFile.getString(getString(R.string.recent_files_key)+i,"");
+//            if(tempStr.length()>0){
+//                tempRecent.add(tempStr);
+//            }
+//        }
+//        if(tempRecent.indexOf(newRecentFileStr)>=0){
+//            tempRecent.remove(newRecentFileStr);
+//            tempRecent.add(0,newRecentFileStr);
+//        }else{
+//            tempRecent.remove(tempRecent.size()-1);
+//            tempRecent.add(0,newRecentFileStr);
+//        }
+//        SharedPreferences.Editor sharedPrefFileEdit = sharedPrefFile.edit();
+//        for(int i=0;i<tempRecent.size() && i<num_recent;i++){
+//            sharedPrefFileEdit.putString(getString(R.string.recent_files_key)+i,tempRecent.get(i));
+//        }
+//        sharedPrefDirEdit.commit();
+//    }
+
+    private void addRecentFileDirectory(File newRecentFile){
+        int num_recent=getResources().getInteger(R.integer.num_recent);
+        addRecent(newRecentFile.getParent(),getString(R.string.recent_directories_file),
+                getString(R.string.recent_directories_key),num_recent);
+
+        addRecent(newRecentFile.getAbsolutePath(),getString(R.string.recent_files_file),
+                getString(R.string.recent_files_key),num_recent);
+    }
+
+    private void addRecent(String str, String prefFile, String prefKey, int num_recent){
+
+        SharedPreferences sharedPreferences = getSharedPreferences(prefFile, Context.MODE_PRIVATE);
+        String tempStr="";
+        ArrayList<String> tempRecent=new ArrayList<String>(num_recent);
+        for(int i=0;i<num_recent;i++){
+            tempStr = sharedPreferences.getString(prefKey+i,"");
+            if(tempStr.length()>0){
+                tempRecent.add(tempStr);
+            }
+        }
+        if(tempRecent.indexOf(str)>=0){
+            tempRecent.remove(str);
+            tempRecent.add(0,str);
+        }else{
+            tempRecent.remove(tempRecent.size()-1);
+            tempRecent.add(0,str);
+        }
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        for(int i=0;i<tempRecent.size() && i<num_recent;i++){
+            editor.putString(prefKey + i, tempRecent.get(i));
+        }
+        editor.commit();
     }
 
     @Override
