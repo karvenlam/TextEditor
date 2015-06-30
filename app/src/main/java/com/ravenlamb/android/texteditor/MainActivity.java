@@ -27,6 +27,11 @@ import java.util.ArrayList;
 
 public class MainActivity extends ListActivity {
 
+    public static final String TAG=MainActivity.class.getName();
+
+    public static final String BROWSE_DIRECTORIES="Browse Directories";
+    public static final String RECENT_DIRECTORIES="Recent Directories";
+    public static final String RECENT_FILES="Recent Files";
 
     //contains the absolute paths of the directories, but only display file name
     ArrayList<String> initialList;
@@ -68,40 +73,20 @@ public class MainActivity extends ListActivity {
 
             if(item.equalsIgnoreCase("New")){
                 //todo go to editor, clear historylist
+                historyList=null;
+                Intent intent2= new Intent(this, EditorActivity.class);
+                startActivity(intent2);
             }else if(item.equalsIgnoreCase("Favorites")){
 
-            }else if(item.equalsIgnoreCase("Browse Directories")){
-                currentList= new ArrayList<String>();
+            }else if(item.equalsIgnoreCase(BROWSE_DIRECTORIES)){
                 isInitialList=false;
-                //todo root list and external storage
-                File[] rootlist= File.listRoots();
-                for(int i=0;i<rootlist.length;i++){
-                    currentList.add(rootlist[i].getAbsolutePath());
-                }
-                if(isExternalStorageReadable()){
-
-//            Environment.DIRECTORY_ALARMS, Environment.DIRECTORY_DCIM, Environment.DIRECTORY_DOCUMENTS
-//            Environment.DIRECTORY_DOWNLOADS, Environment.DIRECTORY_MOVIES,
-//            Environment.DIRECTORY_MUSIC, Environment.DIRECTORY_PICTURES, Environment.DIRECTORY_PODCASTS
-//            Environment.DIRECTORY_RINGTONES
-                    //Toast.makeText(this, "external storage is readable", Toast.LENGTH_SHORT).show();
-                     if(Build.VERSION.SDK_INT >=19){
-                        currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
-                        //externalPublic.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
-                    }
-                    currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
-                    currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath());
-                    currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).getAbsolutePath());
-                    currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath());
-                    currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath());
-                    currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES).getAbsolutePath());
-                    currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PODCASTS).getAbsolutePath());
-                    currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_ALARMS).getAbsolutePath());
-
-                }
-            }else if(item.equalsIgnoreCase("Recent Directories")){
-
-            }else if(item.equalsIgnoreCase("Recent Files")){
+                historyList.add(BROWSE_DIRECTORIES);
+                setCurrentToBrowseDirectories();
+            }else if(item.equalsIgnoreCase(RECENT_DIRECTORIES)){
+                isInitialList=false;
+                historyList.add(RECENT_DIRECTORIES);
+                setCurrentToRecentDirectories();
+            }else if(item.equalsIgnoreCase(RECENT_FILES)){
 
             }
         }else
@@ -123,7 +108,7 @@ public class MainActivity extends ListActivity {
                     Toast.makeText(this,Uri.fromFile(currFile).toString()+" is a "+mimeType+" file",Toast.LENGTH_LONG).show();
                     addRecentFileDirectory(currFile);
                     Intent intent2= new Intent(this, EditorActivity.class);
-                    intent2.putExtra(DisplayList.FILESTR, currentFilePath);
+                    intent2.putExtra(EditorActivity.FILESTR, currentFilePath);
                     startActivity(intent2);
                 }
             }catch (IndexOutOfBoundsException ioobe){
@@ -168,6 +153,66 @@ public class MainActivity extends ListActivity {
         }
     }
 
+
+    public void backButtonPressed(){
+        //todo if size of history is one and is equal to browse directory...
+    }
+
+
+    private void setCurrentToBrowseDirectories(){
+        currentList= new ArrayList<String>();
+        //todo root list and external storage
+        File[] rootlist= File.listRoots();
+        for(int i=0;i<rootlist.length;i++){
+            currentList.add(rootlist[i].getAbsolutePath());
+        }
+        if(isExternalStorageReadable()){
+
+//            Environment.DIRECTORY_ALARMS, Environment.DIRECTORY_DCIM, Environment.DIRECTORY_DOCUMENTS
+//            Environment.DIRECTORY_DOWNLOADS, Environment.DIRECTORY_MOVIES,
+//            Environment.DIRECTORY_MUSIC, Environment.DIRECTORY_PICTURES, Environment.DIRECTORY_PODCASTS
+//            Environment.DIRECTORY_RINGTONES
+            //Toast.makeText(this, "external storage is readable", Toast.LENGTH_SHORT).show();
+            if(Build.VERSION.SDK_INT >=19){
+                currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
+                //externalPublic.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
+            }
+            currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+            currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath());
+            currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).getAbsolutePath());
+            currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath());
+            currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath());
+            currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES).getAbsolutePath());
+            currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PODCASTS).getAbsolutePath());
+            currentList.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_ALARMS).getAbsolutePath());
+
+        }
+
+    }
+
+    private void setCurrentToRecentDirectories(){
+        int num_recent=getResources().getInteger(R.integer.num_recent);
+        setCurrentToRecent(getString(R.string.recent_directories_file),
+                getString(R.string.recent_directories_key), num_recent);
+    }
+
+    private void setCurrentToRecentFiles(){
+        int num_recent=getResources().getInteger(R.integer.num_recent);
+        setCurrentToRecent(getString(R.string.recent_files_file),
+                getString(R.string.recent_files_key), num_recent);
+    }
+
+    private void setCurrentToRecent(String prefFile, String prefKey, int num_recent){
+        SharedPreferences sharedPreferences = getSharedPreferences(prefFile, Context.MODE_PRIVATE);
+        String tempStr="";
+        currentList=new ArrayList<String>();
+        for(int i=0;i<num_recent;i++){
+            tempStr = sharedPreferences.getString(prefKey+i,"");
+            if(tempStr.length()>0){
+                currentList.add(tempStr);
+            }
+        }
+    }
 
 //    private void addRecentFileDirectory(File newRecentFile){
 //
@@ -219,6 +264,10 @@ public class MainActivity extends ListActivity {
 //        sharedPrefDirEdit.commit();
 //    }
 
+    /**
+     * add the selected file and its parent directory to recent lists
+     * @param newRecentFile the recent file
+     */
     private void addRecentFileDirectory(File newRecentFile){
         int num_recent=getResources().getInteger(R.integer.num_recent);
         addRecent(newRecentFile.getParent(),getString(R.string.recent_directories_file),
@@ -228,6 +277,13 @@ public class MainActivity extends ListActivity {
                 getString(R.string.recent_files_key),num_recent);
     }
 
+    /**
+     *
+     * @param str the file or directory
+     * @param prefFile the preference file
+     * @param prefKey the preference key
+     * @param num_recent the maximum number of items kept in recent list
+     */
     private void addRecent(String str, String prefFile, String prefKey, int num_recent){
 
         SharedPreferences sharedPreferences = getSharedPreferences(prefFile, Context.MODE_PRIVATE);

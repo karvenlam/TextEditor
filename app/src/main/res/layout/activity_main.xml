@@ -15,17 +15,20 @@
 
         <!-- todo replace button with icons-->
         <Button
+            style="?android:attr/buttonStyleSmall"
             android:id="@+id/homeButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text="Home"/>
+            android:text="&#x2302;" />
+
         <Button
+            style="?android:attr/buttonStyleSmall"
             android:id="@+id/backButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text="<-"/>
+            android:text="&#x2039;"/>
         <EditText
             android:id="@+id/autocompleteEditText"
             android:layout_weight="1"
@@ -33,11 +36,12 @@
             android:layout_height="wrap_content"
             android:text="Autocomplete"/>
         <Button
+            style="?android:attr/buttonStyleSmall"
             android:id="@+id/searchButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text=""/>
+            android:text="&#x1F50D;"/>
     </LinearLayout>
 
     <ListView

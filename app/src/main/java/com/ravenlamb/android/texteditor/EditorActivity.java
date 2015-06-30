@@ -8,6 +8,7 @@ import android.view.MenuItem;
 
 public class EditorActivity extends ActionBarActivity {
 
+    public final static String FILESTR="com.ravenlamb.android.texteditor.EditorActivity.FILESTR";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

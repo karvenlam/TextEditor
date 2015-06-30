@@ -6,6 +6,13 @@
     <string name="title_activity_editor">EditorActivity</string>
     <string name="title_activity_list">ListActivity</string>
 
+    <string name="search_icon">U+1F50D</string>
+
 
     <string name="favorites_file">com.ravenlamb.android.texteditor.FAVORITES_FILE</string>
+    <string name="recent_directories_file">com.ravenlamb.android.texteditor.RECENT_DIRECTORY_FILE</string>
+    <string name="recent_directories_key">com.ravenlamb.android.texteditor.RECENT_DIRECTORIES_KEY</string>
+    <string name="recent_files_file">com.ravenlamb.android.texteditor.RECENT_FILES_FILE</string>
+    <string name="recent_files_key">com.ravenlamb.android.texteditor.RECENT_FILES_KEY</string>
+    <integer name="num_recent">15</integer>
 </resources>
