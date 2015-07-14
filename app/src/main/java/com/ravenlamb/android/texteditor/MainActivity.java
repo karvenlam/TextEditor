@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,9 +30,11 @@ public class MainActivity extends ListActivity {
 
     public static final String TAG=MainActivity.class.getName();
 
+    public static final String NEW_FILE="New";
     public static final String BROWSE_DIRECTORIES="Browse Directories";
     public static final String RECENT_DIRECTORIES="Recent Directories";
     public static final String RECENT_FILES="Recent Files";
+    public static final String FAVORTIES="Favorites";
 
     //contains the absolute paths of the directories, but only display file name
     ArrayList<String> initialList;
@@ -41,6 +44,8 @@ public class MainActivity extends ListActivity {
 
     boolean isInitialList=true;
 
+    Button backButton;
+
     //New, favorites, default directories, recent directories, recent files
 
     @Override
@@ -49,18 +54,16 @@ public class MainActivity extends ListActivity {
         setContentView(R.layout.activity_main);
 
         initialList=new ArrayList<String>();
-        initialList.add("New");
-        initialList.add("Favorites");
-        initialList.add("Browse Directories");
-        initialList.add("Recent Directories");
-        initialList.add("Recent Files");
+        initialList.add(NEW_FILE);
+        initialList.add(FAVORTIES);
+        initialList.add(BROWSE_DIRECTORIES);
+        initialList.add(RECENT_DIRECTORIES);
+        initialList.add(RECENT_FILES);
 
         currentList=initialList;
         historyList=new ArrayList<String>();
-    }
 
-    private void onBackButtonClick(){
-        //todo, if history is empty, isInitialList is true
+        backButton=(Button)findViewById(R.id.backButton);
     }
 
 
@@ -71,13 +74,14 @@ public class MainActivity extends ListActivity {
         String item=currentList.get(position);
         if(isInitialList){
 
-            if(item.equalsIgnoreCase("New")){
-                //todo go to editor, clear historylist
+            if(item.equalsIgnoreCase(NEW_FILE)){
                 historyList=null;
                 Intent intent2= new Intent(this, EditorActivity.class);
                 startActivity(intent2);
-            }else if(item.equalsIgnoreCase("Favorites")){
-
+            }else if(item.equalsIgnoreCase(FAVORTIES)){
+                isInitialList=false;
+                historyList.add(FAVORTIES);
+                setCurrentToFavorites();
             }else if(item.equalsIgnoreCase(BROWSE_DIRECTORIES)){
                 isInitialList=false;
                 historyList.add(BROWSE_DIRECTORIES);
@@ -87,7 +91,9 @@ public class MainActivity extends ListActivity {
                 historyList.add(RECENT_DIRECTORIES);
                 setCurrentToRecentDirectories();
             }else if(item.equalsIgnoreCase(RECENT_FILES)){
-
+                isInitialList=false;
+                historyList.add(RECENT_FILES);
+                setCurrentToRecentFiles();
             }
         }else
         {
@@ -161,7 +167,7 @@ public class MainActivity extends ListActivity {
 
     private void setCurrentToBrowseDirectories(){
         currentList= new ArrayList<String>();
-        //todo root list and external storage
+        // root list and external storage
         File[] rootlist= File.listRoots();
         for(int i=0;i<rootlist.length;i++){
             currentList.add(rootlist[i].getAbsolutePath());
@@ -189,6 +195,15 @@ public class MainActivity extends ListActivity {
         }
 
     }
+
+    private void setCurrentToFavorites(){
+        String favoritePrefFile=getString(R.string.favorites_file);
+        String favoriteNumKey=getString(R.string.num_favorites_key);
+        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
+        int num_favorites=sharedPreferences.getInt(favoriteNumKey,0);
+        setCurrentToRecent(favoritePrefFile,getString(R.string.favorites),num_favorites);
+    }
+
 
     private void setCurrentToRecentDirectories(){
         int num_recent=getResources().getInteger(R.integer.num_recent);
