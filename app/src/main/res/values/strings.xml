@@ -10,6 +10,8 @@
 
 
     <string name="favorites_file">com.ravenlamb.android.texteditor.FAVORITES_FILE</string>
+    <string name="num_favorites_key">com.ravenlamb.android.texteditor.NUM_FAVORITE_KEY</string>
+    <string name="favorites">com.ravenlamb.android.texteditor.FAVORITES</string>
     <string name="recent_directories_file">com.ravenlamb.android.texteditor.RECENT_DIRECTORY_FILE</string>
     <string name="recent_directories_key">com.ravenlamb.android.texteditor.RECENT_DIRECTORIES_KEY</string>
     <string name="recent_files_file">com.ravenlamb.android.texteditor.RECENT_FILES_FILE</string>

@@ -145,7 +145,7 @@ public class MainActivity extends ListActivity {
             File currFile=new File(dirPath);
             File[] currDirList = currFile.listFiles();
 //            currDirListStr=new String[currDirList.length];
-            currentList=new ArrayList<String>();
+            currentList=new ArrayList<>();
             for(int i=0;i<currDirList.length;i++){
                 currentList.add(currDirList[i].getAbsolutePath());
             }
@@ -223,7 +223,7 @@ public class MainActivity extends ListActivity {
         currentList=new ArrayList<String>();
         for(int i=0;i<num_recent;i++){
             tempStr = sharedPreferences.getString(prefKey+i,"");
-            if(tempStr.length()>0){
+            if(tempStr !=null && tempStr.length()>0){
                 currentList.add(tempStr);
             }
         }
@@ -306,7 +306,7 @@ public class MainActivity extends ListActivity {
         ArrayList<String> tempRecent=new ArrayList<String>(num_recent);
         for(int i=0;i<num_recent;i++){
             tempStr = sharedPreferences.getString(prefKey+i,"");
-            if(tempStr.length()>0){
+            if(tempStr != null && tempStr.length()>0){
                 tempRecent.add(tempStr);
             }
         }
@@ -321,7 +321,7 @@ public class MainActivity extends ListActivity {
         for(int i=0;i<tempRecent.size() && i<num_recent;i++){
             editor.putString(prefKey + i, tempRecent.get(i));
         }
-        editor.commit();
+        editor.apply();
     }
 
     @Override
