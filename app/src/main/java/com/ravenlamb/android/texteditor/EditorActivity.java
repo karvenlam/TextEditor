@@ -5,6 +5,12 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+/**
+ * have multiple ArrayAdapter
+ * with/without line number
+ * with/without wrap
+ * binary
+ */
 
 public class EditorActivity extends ActionBarActivity {
 
