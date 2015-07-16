@@ -28,6 +28,8 @@ import java.util.ArrayList;
 
 public class MainActivity extends ListActivity {
 
+
+
     public static final String TAG=MainActivity.class.getName();
 
     public static final String NEW_FILE="New";

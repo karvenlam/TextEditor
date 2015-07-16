@@ -6,7 +6,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 /**
- * have multiple ArrayAdapter
+ * have multiple ArrayAdapter, or multiple style files,
+ *
  * with/without line number
  * with/without wrap
  * binary
@@ -15,12 +16,20 @@ import android.view.MenuItem;
 public class EditorActivity extends ActionBarActivity {
 
     public final static String FILESTR="com.ravenlamb.android.texteditor.EditorActivity.FILESTR";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_editor);
     }
 
+    /**
+     *
+     */
+    private void setArrayAdapter(){
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
