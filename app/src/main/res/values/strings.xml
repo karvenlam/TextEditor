@@ -19,5 +19,9 @@
     <string name="recent_directories_key">com.ravenlamb.android.texteditor.RECENT_DIRECTORIES_KEY</string>
     <string name="recent_files_file">com.ravenlamb.android.texteditor.RECENT_FILES_FILE</string>
     <string name="recent_files_key">com.ravenlamb.android.texteditor.RECENT_FILES_KEY</string>
+    <string name="settings_file">com.ravenlamb.android.texteditor.SETTINGS_FILE</string>
+    <string name="background_color_key">com.ravenlamb.android.texteditor.BACKGROUND_KEY</string>
+    <string name="text_color_key">com.ravenlamb.android.texteditor.TEXTCOLOR_KEY</string>
+    <string name="text_size_key">com.ravenlamb.android.texteditor.TEXTSIZE_KEY</string>
     <integer name="num_recent">15</integer>
 </resources>

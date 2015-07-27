@@ -20,7 +20,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text="&#x2302;" />
+            android:text="1"/>
+            <!--android:text="&#x2302;"/>-->
+
 
         <Button
             style="?android:attr/buttonStyleSmall"
@@ -28,7 +30,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text="&#x2039;"/>
+            android:text="2;"/>
+            <!--android:text="&#x2039;"/>-->
+
         <EditText
             android:id="@+id/autocompleteEditText"
             android:layout_weight="1"
@@ -41,11 +45,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text="&#x1F50D;"/>
+            android:text="3"/>
+            <!--android:text="&#x1F50D;"/>-->
+
     </LinearLayout>
 
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/android:list" />
+        android:id="@android:id/list" />
 </LinearLayout>

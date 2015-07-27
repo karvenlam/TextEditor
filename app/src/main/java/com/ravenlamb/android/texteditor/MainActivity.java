@@ -38,6 +38,10 @@ public class MainActivity extends ListActivity {
     public static final String RECENT_FILES="Recent Files";
     public static final String FAVORTIES="Favorites";
 
+    public static final int DEFAULT_TEXT_COLOR=Color.BLACK;
+    int textColor=DEFAULT_TEXT_COLOR;
+    int textSize=12;
+
     //contains the absolute paths of the directories, but only display file name
     ArrayList<String> initialList;
     ArrayList<String> currentList;
@@ -53,6 +57,7 @@ public class MainActivity extends ListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("onCreate()", "Calling setContentView()");
         setContentView(R.layout.activity_main);
 
         initialList=new ArrayList<String>();
@@ -66,6 +71,19 @@ public class MainActivity extends ListActivity {
         historyList=new ArrayList<String>();
 
         backButton=(Button)findViewById(R.id.backButton);
+
+        Log.e(TAG, initialList.toString());
+        try{
+            //fileListAdapter=new ArrayAdapter<String>(this,R.layout.list_item, R.id.itemView,currDirListStr);
+            String[] test={"1","2"};
+//            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, (String[])initialList.toArray());
+            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
+            setListAdapter(fileListAdapter);
+        }catch (Exception e){
+            e.printStackTrace();
+
+        }
+        //todo read preference, set background, textCOlor, textSize
     }
 
 
@@ -152,7 +170,7 @@ public class MainActivity extends ListActivity {
                 currentList.add(currDirList[i].getAbsolutePath());
             }
             //fileListAdapter=new ArrayAdapter<String>(this,R.layout.list_item, R.id.itemView,currDirListStr);
-            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, (String[])currentList.toArray());
+            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
             setListAdapter(fileListAdapter);
             setTitle(currFile.getAbsolutePath());
         }catch (Exception e){
@@ -369,6 +387,18 @@ public class MainActivity extends ListActivity {
         return false;
     }
 
+    private String[] toStringArray(ArrayList<String> temp){
+        if(temp==null){
+            return null;
+        }
+        String[] arr=new String[temp.size()];
+        for(int i=0;i<temp.size();i++){
+            arr[i]=temp.get(i);
+        }
+        return arr;
+    }
+
+
     class NavigationListAdapter extends ArrayAdapter<String> {
         public NavigationListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
             super(context, resource, textViewResourceId, objects);
@@ -380,6 +410,7 @@ public class MainActivity extends ListActivity {
                     (Context.LAYOUT_INFLATER_SERVICE);
             View row= inflater.inflate(R.layout.list_item,null,false);
             TextView textview= (TextView) row.findViewById(R.id.itemView);
+            //todo set text size
             String currentFilePath=MainActivity.this.currentList.get(position);
             if(isInitialList) {
                 textview.setText(currentFilePath);
