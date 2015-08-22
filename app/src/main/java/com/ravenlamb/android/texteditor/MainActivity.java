@@ -72,20 +72,30 @@ public class MainActivity extends ListActivity {
 
         backButton=(Button)findViewById(R.id.backButton);
 
+        String favoritePrefFile=getString(R.string.favorites_file);
+        String favoriteNumKey=getString(R.string.num_favorites_key);
+        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        int num_recent=getResources().getInteger(R.integer.num_recent);
+        for(int i=0; i<num_recent;i++){
+            editor.putString(favoriteNumKey + i, "favorite"+i);
+        }
+        editor.apply();
+
         Log.e(TAG, initialList.toString());
         try{
             //fileListAdapter=new ArrayAdapter<String>(this,R.layout.list_item, R.id.itemView,currDirListStr);
-            String[] test={"1","2"};
+            //String[] test={"1","2"};
 //            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, (String[])initialList.toArray());
             fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
             setListAdapter(fileListAdapter);
+            setTitle(R.string.app_name);
         }catch (Exception e){
             e.printStackTrace();
 
         }
         //todo read preference, set background, textCOlor, textSize
     }
-
 
 
     @Override
@@ -99,21 +109,27 @@ public class MainActivity extends ListActivity {
                 Intent intent2= new Intent(this, EditorActivity.class);
                 startActivity(intent2);
             }else if(item.equalsIgnoreCase(FAVORTIES)){
+                //Toast.makeText(this,"Favorites clicked",Toast.LENGTH_SHORT).show();
                 isInitialList=false;
                 historyList.add(FAVORTIES);
                 setCurrentToFavorites();
+                setTitle(FAVORTIES);
             }else if(item.equalsIgnoreCase(BROWSE_DIRECTORIES)){
+                //Toast.makeText(this,"browse clicked",Toast.LENGTH_SHORT).show();
                 isInitialList=false;
                 historyList.add(BROWSE_DIRECTORIES);
                 setCurrentToBrowseDirectories();
+                setTitle(BROWSE_DIRECTORIES);
             }else if(item.equalsIgnoreCase(RECENT_DIRECTORIES)){
                 isInitialList=false;
                 historyList.add(RECENT_DIRECTORIES);
                 setCurrentToRecentDirectories();
+                setTitle(RECENT_DIRECTORIES);
             }else if(item.equalsIgnoreCase(RECENT_FILES)){
                 isInitialList=false;
                 historyList.add(RECENT_FILES);
                 setCurrentToRecentFiles();
+                setTitle(RECENT_FILES);
             }
         }else
         {
@@ -144,6 +160,9 @@ public class MainActivity extends ListActivity {
                 e.printStackTrace();
             }
         }
+
+        fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
+        setListAdapter(fileListAdapter);
     }
 
     private void processNewDirectory(String filePath){
@@ -180,8 +199,52 @@ public class MainActivity extends ListActivity {
     }
 
 
-    public void backButtonPressed(){
+    public void backButtonPressed(View view){
         //todo if size of history is one and is equal to browse directory...
+        //historyList size=0 currentList==initialList
+        //historyList size=1 go back to initialList
+        //historyList size>=3. pop2 add one back
+        int historySize=historyList.size();
+        if(historySize==0) {
+            return;
+        }else if(historySize==1){
+            isInitialList=true;
+            historyList.remove(0);
+            currentList=initialList;
+            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
+            setListAdapter(fileListAdapter);
+            setTitle(R.string.app_name);
+
+        }else if(historySize==2){
+            historyList.remove(historySize-1);
+            String item=historyList.get(historySize - 2);
+            if(item.equalsIgnoreCase(FAVORTIES)){
+                //Toast.makeText(this,"Favorites clicked",Toast.LENGTH_SHORT).show();
+                isInitialList=false;
+                setCurrentToFavorites();
+                setTitle(FAVORTIES);
+            }else if(item.equalsIgnoreCase(BROWSE_DIRECTORIES)){
+                //Toast.makeText(this,"browse clicked",Toast.LENGTH_SHORT).show();
+                isInitialList=false;
+                setCurrentToBrowseDirectories();
+                setTitle(BROWSE_DIRECTORIES);
+            }else if(item.equalsIgnoreCase(RECENT_DIRECTORIES)){
+                isInitialList=false;
+                setCurrentToRecentDirectories();
+                setTitle(RECENT_DIRECTORIES);
+            }else if(item.equalsIgnoreCase(RECENT_FILES)){
+                isInitialList=false;
+                setCurrentToRecentFiles();
+                setTitle(RECENT_FILES);
+            }
+            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
+            setListAdapter(fileListAdapter);
+        }else{
+            historyList.remove(historySize-1);
+            String item=historyList.remove(historySize-2);
+            processNewDirectory(item);
+        }
+
     }
 
 
@@ -243,6 +306,7 @@ public class MainActivity extends ListActivity {
         currentList=new ArrayList<String>();
         for(int i=0;i<num_recent;i++){
             tempStr = sharedPreferences.getString(prefKey+i,"");
+            //Toast.makeText(this,"File "+i+" "+tempStr,Toast.LENGTH_SHORT).show();
             if(tempStr !=null && tempStr.length()>0){
                 currentList.add(tempStr);
             }
@@ -417,7 +481,6 @@ public class MainActivity extends ListActivity {
                 textview.setTextColor(Color.BLACK);
             }else{
                 File currentFile= new File(currentFilePath);
-                textview.setText(currentFile.getName());
                 textview.setTextColor(Color.BLACK);
                 if(!currentFile.canWrite()){
                     if(currentFile.canRead()){
@@ -425,6 +488,11 @@ public class MainActivity extends ListActivity {
                     }else{
                         textview.setTextColor(Color.GRAY);
                     }
+                }
+                if(currentFile.isDirectory()){
+                    textview.setText(currentFile.getName()+"/   ");
+                }else{
+                    textview.setText(currentFile.getName()+"   ");
                 }
             }
             return row;

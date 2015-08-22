@@ -1,9 +1,14 @@
 package com.ravenlamb.android.texteditor;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+
+import java.util.ArrayList;
 
 /**
  * have multiple ArrayAdapter, or multiple style files,
@@ -22,6 +27,8 @@ public class EditorActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_editor);
+        Intent intent =getIntent();
+        String initFileStr=intent.getStringExtra(FILESTR);
     }
 
     /**
@@ -52,4 +59,19 @@ public class EditorActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    class BinaryFileListAdapter extends ArrayAdapter<String>{
+
+        public BinaryFileListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
+            super(context, resource, textViewResourceId, objects);
+        }
+    }
+
+    class TextFileListAdapter extends ArrayAdapter<String>{//just display line numbers all the time
+
+        public TextFileListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
+            super(context, resource, textViewResourceId, objects);
+        }
+    }
+
 }
