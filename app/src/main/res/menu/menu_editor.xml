@@ -4,6 +4,16 @@
     tools:context="com.ravenlamb.android.texteditor.EditorActivity">
     <item android:id="@+id/action_settings" android:title="@string/action_settings"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_view_edit" android:title="@string/action_viewEdit"
+        android:orderInCategory="100" app:showAsAction="never" android:checkable="true" />
+    <item android:id="@+id/action_saveAs" android:title="@string/action_saveAs"
+        android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_charsets" android:title="@string/action_charset"
+        android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_binary" android:title="@string/action_binary"
+        android:orderInCategory="100" app:showAsAction="never" android:checkable="true"/>
+    <item android:id="@+id/action_largerText" android:title="@string/action_largerText"
+        android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_smallerText" android:title="@string/action_smallerText"
         android:orderInCategory="100" app:showAsAction="never" />
 </menu>

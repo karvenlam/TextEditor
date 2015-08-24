@@ -1,7 +1,9 @@
 package com.ravenlamb.android.texteditor;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.ActionBarActivity;
@@ -50,7 +52,8 @@ public class EditorActivity extends ListActivity {
 //            UTF-8
     boolean displayAsBinary=false;
     String currCharset="US-ASCII";
-    String[] charsetList;
+    String[] charsetList={"ISO-8859-1", "US-ASCII","UTF-16","UTF-16BE","UTF-16LE","UTF-8"};
+    String saveFilePath="";//todo
 
 
     ArrayAdapter<String> fileListAdapter;
@@ -65,7 +68,7 @@ public class EditorActivity extends ListActivity {
 
         SortedMap<String, Charset> charsetSortedMap= Charset.availableCharsets();
         Set<String> charsetNames=charsetSortedMap.keySet();
-        charsetList=(String[]) charsetNames.toArray();
+        charsetList= charsetNames.toArray(charsetList);
 
 
         if(filePath==null){
@@ -77,16 +80,21 @@ public class EditorActivity extends ListActivity {
         String text_binary_key=getString(R.string.text_binary_key);
         SharedPreferences sharedPreferences = getSharedPreferences(settings_file, Context.MODE_PRIVATE);
         String textBinaryDisplay = sharedPreferences.getString(text_binary_key, "text");
-        displayAsBinary= (textBinaryDisplay.equals("text"))?false:true;
+        displayAsBinary= (!textBinaryDisplay.equals("text"));
 
-        if(displayAsBinary){
-
-        }else{
-            readFileAsText();
-        }
+        refreshDisplay();
     }
 
     private void createNewTextFile() {
+    }
+
+    private void refreshDisplay(){
+
+        if(displayAsBinary){
+            //todo
+        }else{
+            readFileAsText();
+        }
     }
 
     private void readFileAsText(){
@@ -104,12 +112,10 @@ public class EditorActivity extends ListActivity {
             setListAdapter(fileListAdapter);
             setTitle(R.string.app_name);
         }catch (FileNotFoundException fnfe){
-            Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
-            //todo remove after debug
+            //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
             fnfe.printStackTrace();
         }catch (IOException ioe){
-            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
-            //todo remove after debug
+//            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
             ioe.printStackTrace();
 
         }
@@ -135,6 +141,8 @@ public class EditorActivity extends ListActivity {
         return true;
     }
 
+
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -148,10 +156,22 @@ public class EditorActivity extends ListActivity {
         }
         if (id == R.id.action_charsets) {
 
-
+            AlertDialog.Builder builder=new AlertDialog.Builder(this);
+            builder.setTitle("Select Charset")
+                    .setItems(charsetList, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            currCharset=charsetList[which];
+                            refreshDisplay();
+                        }
+                    });
+            AlertDialog dialog=builder.create();
+            dialog.show();
             return true;
         }
-
+        //todo binary hex mode, text size
+        //todo edit/view
+        //todo save
         return super.onOptionsItemSelected(item);
     }
 
