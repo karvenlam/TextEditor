@@ -419,6 +419,9 @@ public class MainActivity extends ListActivity {
         editor.apply();
     }
 
+    //todo onFinish, if this is called by Editor to choose directory, return directory, or file name
+    //getParent, call function to set saveFilePath
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -437,7 +440,7 @@ public class MainActivity extends ListActivity {
         if (id == R.id.action_settings) {
             return true;
         }
-
+        //todo new directory and text size
         return super.onOptionsItemSelected(item);
     }
 

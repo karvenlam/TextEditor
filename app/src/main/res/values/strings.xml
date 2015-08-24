@@ -8,6 +8,13 @@
     <string name="action_settings">Settings</string>
     <string name="action_newDir">New Directory</string>
     <string name="action_charset">Choose Charsets</string>
+    <string name="action_largerText">Increase Text Size</string>
+    <string name="action_smallerText">Decrease Text Size</string>
+    <string name="action_binary">Hex Mode</string>
+    <string name="action_viewEdit">Edit</string>
+    <string name="action_saveAs">Save As</string>
+
+
     <string name="title_activity_editor">Editor</string>
     <string name="title_activity_list">List</string>
 
