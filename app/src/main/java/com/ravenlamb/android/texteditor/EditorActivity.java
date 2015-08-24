@@ -1,14 +1,31 @@
 package com.ravenlamb.android.texteditor;
 
+import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.SortedMap;
 
 /**
  * have multiple ArrayAdapter, or multiple style files,
@@ -18,9 +35,25 @@ import java.util.ArrayList;
  * binary
  */
 
-public class EditorActivity extends ActionBarActivity {
+public class EditorActivity extends ListActivity {
 
     public final static String FILESTR="com.ravenlamb.android.texteditor.EditorActivity.FILESTR";
+
+    private String filePath;
+    private ArrayList<String> textArrayList;
+
+//            ISO-8859-1
+//            US-ASCII
+//            UTF-16
+//            UTF-16BE
+//            UTF-16LE
+//            UTF-8
+    boolean displayAsBinary=false;
+    String currCharset="US-ASCII";
+    String[] charsetList;
+
+
+    ArrayAdapter<String> fileListAdapter;
 
 
     @Override
@@ -28,14 +61,71 @@ public class EditorActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_editor);
         Intent intent =getIntent();
-        String initFileStr=intent.getStringExtra(FILESTR);
+        filePath=intent.getStringExtra(FILESTR);
+
+        SortedMap<String, Charset> charsetSortedMap= Charset.availableCharsets();
+        Set<String> charsetNames=charsetSortedMap.keySet();
+        charsetList=(String[]) charsetNames.toArray();
+
+
+        if(filePath==null){
+            createNewTextFile();
+            return;
+        }
+
+        String settings_file=getString(R.string.settings_file);
+        String text_binary_key=getString(R.string.text_binary_key);
+        SharedPreferences sharedPreferences = getSharedPreferences(settings_file, Context.MODE_PRIVATE);
+        String textBinaryDisplay = sharedPreferences.getString(text_binary_key, "text");
+        displayAsBinary= (textBinaryDisplay.equals("text"))?false:true;
+
+        if(displayAsBinary){
+
+        }else{
+            readFileAsText();
+        }
     }
 
-    /**
-     *
-     */
-    private void setArrayAdapter(){
+    private void createNewTextFile() {
+    }
 
+    private void readFileAsText(){
+        //todo for large files, use LineNumberReader
+        try {
+            BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), currCharset));
+            String line="";
+            textArrayList=new ArrayList<String>();
+            while ((line = buf.readLine()) != null) {
+                textArrayList.add(line);
+            }
+
+            fileListAdapter=new TextFileListAdapter(this,R.layout.editor_line, R.id.itemLine, toStringArray(textArrayList));
+
+            setListAdapter(fileListAdapter);
+            setTitle(R.string.app_name);
+        }catch (FileNotFoundException fnfe){
+            Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+            //todo remove after debug
+            fnfe.printStackTrace();
+        }catch (IOException ioe){
+            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+            //todo remove after debug
+            ioe.printStackTrace();
+
+        }
+
+    }
+
+
+    private String[] toStringArray(ArrayList<String> temp){
+        if(temp==null){
+            return null;
+        }
+        String[] arr=new String[temp.size()];
+        for(int i=0;i<temp.size();i++){
+            arr[i]=temp.get(i);
+        }
+        return arr;
     }
 
     @Override
@@ -56,6 +146,11 @@ public class EditorActivity extends ActionBarActivity {
         if (id == R.id.action_settings) {
             return true;
         }
+        if (id == R.id.action_charsets) {
+
+
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -71,6 +166,42 @@ public class EditorActivity extends ActionBarActivity {
 
         public TextFileListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
             super(context, resource, textViewResourceId, objects);
+        }
+
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = (LayoutInflater)getApplicationContext().getSystemService
+                    (Context.LAYOUT_INFLATER_SERVICE);
+            View row= inflater.inflate(R.layout.editor_line,null,false);
+            TextView textview= (TextView) row.findViewById(R.id.itemLine);
+            TextView lineNumView= (TextView) row.findViewById(R.id.lineNum);
+
+            textview.setText(textArrayList.get(position));
+            lineNumView.setText(String.valueOf( position+1));
+            //todo set text size
+//            String currentLine=EditorActivity.this.textArrayList.get(position);
+//
+//            if(isInitialList) {
+//                textview.setText(currentFilePath);
+//                textview.setTextColor(Color.BLACK);
+//            }else{
+//                File currentFile= new File(currentFilePath);
+//                textview.setTextColor(Color.BLACK);
+//                if(!currentFile.canWrite()){
+//                    if(currentFile.canRead()){
+//                        textview.setTypeface(null, Typeface.ITALIC);
+//                    }else{
+//                        textview.setTextColor(Color.GRAY);
+//                    }
+//                }
+//                if(currentFile.isDirectory()){
+//                    textview.setText(currentFile.getName()+"/   ");
+//                }else{
+//                    textview.setText(currentFile.getName()+"   ");
+//                }
+//            }
+            return row;
         }
     }
 

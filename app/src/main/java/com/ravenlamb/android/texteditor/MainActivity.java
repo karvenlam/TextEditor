@@ -50,7 +50,7 @@ public class MainActivity extends ListActivity {
 
     boolean isInitialList=true;
 
-    Button backButton;
+//    Button backButton;
 
     //New, favorites, default directories, recent directories, recent files
 
@@ -70,7 +70,7 @@ public class MainActivity extends ListActivity {
         currentList=initialList;
         historyList=new ArrayList<String>();
 
-        backButton=(Button)findViewById(R.id.backButton);
+//        backButton=(Button)findViewById(R.id.backButton);
 
         String favoritePrefFile=getString(R.string.favorites_file);
         String favoriteNumKey=getString(R.string.num_favorites_key);
@@ -133,7 +133,6 @@ public class MainActivity extends ListActivity {
             }
         }else
         {
-            String currentFilePath=item;
             try {
                 File currFile=new File(item);
                 if(!currFile.canRead()){
@@ -147,11 +146,12 @@ public class MainActivity extends ListActivity {
 //                String mimeType = getContentResolver().getType(returnUri);
                     //todo: need to make sure file is not binary
                     String mimeType = getContentResolver().getType(Uri.fromFile(currFile));
-                    Toast.makeText(this,Uri.fromFile(currFile).toString()+" is a "+mimeType+" file",Toast.LENGTH_LONG).show();
                     addRecentFileDirectory(currFile);
+                    Toast.makeText(this,Uri.fromFile(currFile).toString()+" is a "+mimeType+" file",Toast.LENGTH_LONG).show();
                     Intent intent2= new Intent(this, EditorActivity.class);
-                    intent2.putExtra(EditorActivity.FILESTR, currentFilePath);
+                    intent2.putExtra(EditorActivity.FILESTR, item);
                     startActivity(intent2);
+                    Toast.makeText(this,Uri.fromFile(currFile).toString()+" after startactivity",Toast.LENGTH_LONG).show();
                 }
             }catch (IndexOutOfBoundsException ioobe){
                 Log.e(TAG, "onChildClick IndexOutOfBoundException");
@@ -174,12 +174,12 @@ public class MainActivity extends ListActivity {
     private void refreshNavigationList(String dirPath){
 
         //if(historyIndex>1){
-        if(historyList.size()>1){
-            backButton.setEnabled(true);
-        }else
-        {
-            backButton.setEnabled(false);
-        }
+//        if(historyList.size()>1){
+//            backButton.setEnabled(true);
+//        }else
+//        {
+//            backButton.setEnabled(false);
+//        }
         try{
             File currFile=new File(dirPath);
             File[] currDirList = currFile.listFiles();
@@ -198,6 +198,15 @@ public class MainActivity extends ListActivity {
         }
     }
 
+
+    public void homeButtonPressed(View view){
+        isInitialList=true;
+        currentList=initialList;
+        historyList=new ArrayList<String>();
+        fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
+        setListAdapter(fileListAdapter);
+        setTitle(R.string.app_name);
+    }
 
     public void backButtonPressed(View view){
         //todo if size of history is one and is equal to browse directory...
@@ -398,7 +407,9 @@ public class MainActivity extends ListActivity {
             tempRecent.remove(str);
             tempRecent.add(0,str);
         }else{
-            tempRecent.remove(tempRecent.size()-1);
+            if(tempRecent.size()==num_recent) {
+                tempRecent.remove(tempRecent.size() - 1);
+            }
             tempRecent.add(0,str);
         }
         SharedPreferences.Editor editor = sharedPreferences.edit();
