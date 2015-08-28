@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -18,10 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -40,6 +37,9 @@ import java.util.SortedMap;
 public class EditorActivity extends ListActivity {
 
     public final static String FILESTR="com.ravenlamb.android.texteditor.EditorActivity.FILESTR";
+    public final static String FILEPATH="filePath";
+    public final static String CURRCHARSET="currCharSet";
+    public final static String TEXTARRAYLIST="textArrayList";
 
     private String filePath;
     private ArrayList<String> textArrayList;
@@ -70,25 +70,48 @@ public class EditorActivity extends ListActivity {
         Set<String> charsetNames=charsetSortedMap.keySet();
         charsetList= charsetNames.toArray(charsetList);
 
-
-        if(filePath==null){
-            createNewTextFile();
-            return;
-        }
-
         String settings_file=getString(R.string.settings_file);
         String text_binary_key=getString(R.string.text_binary_key);
         SharedPreferences sharedPreferences = getSharedPreferences(settings_file, Context.MODE_PRIVATE);
         String textBinaryDisplay = sharedPreferences.getString(text_binary_key, "text");
         displayAsBinary= (!textBinaryDisplay.equals("text"));
+        if(filePath==null){
+            createNewTextFile();
+        }else {
+            readFile();
+        }
 
-        refreshDisplay();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putCharSequence(FILEPATH, filePath);
+        outState.putCharSequence(CURRCHARSET, currCharset);
+        outState.putStringArrayList(TEXTARRAYLIST, textArrayList);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle state) {
+        super.onRestoreInstanceState(state);
+        filePath=state.getString(FILEPATH);
+        currCharset=state.getString(CURRCHARSET);
+        textArrayList=state.getStringArrayList(TEXTARRAYLIST);
+
+        fileListAdapter=new TextFileListAdapter(this,R.layout.editor_line, R.id.itemLine, toStringArray(textArrayList));
+        setListAdapter(fileListAdapter);
+        setTitle(filePath);
     }
 
     private void createNewTextFile() {
     }
 
-    private void refreshDisplay(){
+    private void readFile(){
 
         if(displayAsBinary){
             //todo
@@ -110,7 +133,7 @@ public class EditorActivity extends ListActivity {
             fileListAdapter=new TextFileListAdapter(this,R.layout.editor_line, R.id.itemLine, toStringArray(textArrayList));
 
             setListAdapter(fileListAdapter);
-            setTitle(R.string.app_name);
+            setTitle(filePath);
         }catch (FileNotFoundException fnfe){
             //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
             fnfe.printStackTrace();
@@ -138,6 +161,22 @@ public class EditorActivity extends ListActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_editor, menu);
+
+        String favoritePrefFile=getString(R.string.favorites_file);
+        String favoriteNumKey=getString(R.string.num_favorites_key);
+        String prefKey=getString(R.string.favorites);
+        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
+        int num_favorites=sharedPreferences.getInt(favoriteNumKey, 0);
+        String tempStr="";
+        for(int i=0;i<num_favorites;i++){
+            tempStr = sharedPreferences.getString(prefKey + i, "");
+            //Toast.makeText(this,"File "+i+" "+tempStr,Toast.LENGTH_SHORT).show();
+            if(tempStr !=null && tempStr.equals(filePath)){
+                MenuItem favoriteMenuItem= (MenuItem) findViewById(R.id.action_favorites);
+                favoriteMenuItem.setChecked(true);
+                break;
+            }
+        }
         return true;
     }
 
@@ -162,17 +201,35 @@ public class EditorActivity extends ListActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             currCharset=charsetList[which];
-                            refreshDisplay();
+                            readFile();
                         }
                     });
             AlertDialog dialog=builder.create();
             dialog.show();
             return true;
         }
+        if (id == R.id.action_favorites) {
+            MenuItem favoriteMenuItem= (MenuItem) findViewById(R.id.action_favorites);
+            if(favoriteMenuItem.isChecked()){
+                removeFromFavorites();
+                favoriteMenuItem.setChecked(false);
+            }else{
+                addToFavorites();
+                favoriteMenuItem.setChecked(true);
+            }
+        }
         //todo binary hex mode, text size
         //todo edit/view
         //todo save
         return super.onOptionsItemSelected(item);
+    }
+    
+    private void addToFavorites(){
+        //// TODO: 8/27/2015  
+    }
+    
+    private void removeFromFavorites(){
+        //// TODO: 8/27/2015  
     }
 
     class BinaryFileListAdapter extends ArrayAdapter<String>{
@@ -198,7 +255,7 @@ public class EditorActivity extends ListActivity {
             TextView lineNumView= (TextView) row.findViewById(R.id.lineNum);
 
             textview.setText(textArrayList.get(position));
-            lineNumView.setText(String.valueOf( position+1));
+            lineNumView.setText(String.valueOf(position+1));
             //todo set text size
 //            String currentLine=EditorActivity.this.textArrayList.get(position);
 //

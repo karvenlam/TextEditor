@@ -38,9 +38,13 @@ public class MainActivity extends ListActivity {
     public static final String RECENT_FILES="Recent Files";
     public static final String FAVORTIES="Favorites";
 
-    public static final int DEFAULT_TEXT_COLOR=Color.BLACK;
-    int textColor=DEFAULT_TEXT_COLOR;
-    int textSize=12;
+    public static final String CURRENTLIST="currentList";
+    public static final String HISTORYLIST="historyList";
+    public static final String ISINITIALLIST="isInitialList";
+
+//    public static final int DEFAULT_TEXT_COLOR=Color.BLACK;
+//    int textColor=DEFAULT_TEXT_COLOR;
+//    int textSize=12;
 
     //contains the absolute paths of the directories, but only display file name
     ArrayList<String> initialList;
@@ -72,16 +76,6 @@ public class MainActivity extends ListActivity {
 
 //        backButton=(Button)findViewById(R.id.backButton);
 
-        String favoritePrefFile=getString(R.string.favorites_file);
-        String favoriteNumKey=getString(R.string.num_favorites_key);
-        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        int num_recent=getResources().getInteger(R.integer.num_recent);
-        for(int i=0; i<num_recent;i++){
-            editor.putString(favoriteNumKey + i, "favorite"+i);
-        }
-        editor.apply();
-
         Log.e(TAG, initialList.toString());
         try{
             //fileListAdapter=new ArrayAdapter<String>(this,R.layout.list_item, R.id.itemView,currDirListStr);
@@ -97,6 +91,30 @@ public class MainActivity extends ListActivity {
         //todo read preference, set background, textCOlor, textSize
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putStringArrayList(CURRENTLIST,currentList);
+        outState.putStringArrayList(HISTORYLIST,historyList);
+        outState.putBoolean(ISINITIALLIST,isInitialList);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle state) {
+        super.onRestoreInstanceState(state);
+        currentList=state.getStringArrayList(CURRENTLIST);
+        historyList=state.getStringArrayList(HISTORYLIST);
+        isInitialList=state.getBoolean(ISINITIALLIST);
+
+        fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
+        setListAdapter(fileListAdapter);
+        if(historyList !=null && historyList.size()>1){
+            setTitle(historyList.get(historyList.size()-1));
+        }else
+        {
+            setTitle(R.string.app_name);
+        }
+    }
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -198,6 +216,17 @@ public class MainActivity extends ListActivity {
         }
     }
 
+    /**
+     * Search from the currentList and their subdirectories for files with match name
+     * @param view
+     */
+    public void searchButtonPressed(View view){
+        //if it is initial list, search from root list
+
+        //append search result to currentList
+
+    }
+
 
     public void homeButtonPressed(View view){
         isInitialList=true;
@@ -294,6 +323,7 @@ public class MainActivity extends ListActivity {
         SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
         int num_favorites=sharedPreferences.getInt(favoriteNumKey,0);
         setCurrentToRecent(favoritePrefFile,getString(R.string.favorites),num_favorites);
+        //todo, need to sort favorites
     }
 
 

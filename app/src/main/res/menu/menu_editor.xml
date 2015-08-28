@@ -8,6 +8,10 @@
         android:orderInCategory="100" app:showAsAction="never" android:checkable="true" />
     <item android:id="@+id/action_saveAs" android:title="@string/action_saveAs"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_favorites" android:title="@string/action_favorites"
+        android:orderInCategory="100" app:showAsAction="never" android:checkable="true" />
+    <item android:id="@+id/action_share" android:title="@string/action_share"
+        android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_charsets" android:title="@string/action_charset"
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_binary" android:title="@string/action_binary"

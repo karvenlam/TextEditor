@@ -13,6 +13,8 @@
     <string name="action_binary">Hex Mode</string>
     <string name="action_viewEdit">Edit</string>
     <string name="action_saveAs">Save As</string>
+    <string name="action_favorites">Favorite</string>
+    <string name="action_share">Share</string>
 
 
     <string name="title_activity_editor">Editor</string>
