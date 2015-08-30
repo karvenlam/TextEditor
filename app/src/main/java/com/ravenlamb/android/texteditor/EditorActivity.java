@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +41,7 @@ public class EditorActivity extends ListActivity {
     public final static String FILEPATH="filePath";
     public final static String CURRCHARSET="currCharSet";
     public final static String TEXTARRAYLIST="textArrayList";
+    public final static String FIRSTPOSITION="firstPosition";
 
     private String filePath;
     private ArrayList<String> textArrayList;
@@ -93,6 +95,8 @@ public class EditorActivity extends ListActivity {
         outState.putCharSequence(FILEPATH, filePath);
         outState.putCharSequence(CURRCHARSET, currCharset);
         outState.putStringArrayList(TEXTARRAYLIST, textArrayList);
+        int firstVisiblePosition= this.getListView().getFirstVisiblePosition();
+        outState.putInt(FIRSTPOSITION,firstVisiblePosition);
         super.onSaveInstanceState(outState);
     }
 
@@ -106,6 +110,9 @@ public class EditorActivity extends ListActivity {
         fileListAdapter=new TextFileListAdapter(this,R.layout.editor_line, R.id.itemLine, toStringArray(textArrayList));
         setListAdapter(fileListAdapter);
         setTitle(filePath);
+
+        int firstVisiblePosition= state.getInt(FIRSTPOSITION);
+        this.getListView().setSelectionFromTop(firstVisiblePosition,0);
     }
 
     private void createNewTextFile() {

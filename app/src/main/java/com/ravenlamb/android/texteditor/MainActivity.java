@@ -41,6 +41,7 @@ public class MainActivity extends ListActivity {
     public static final String CURRENTLIST="currentList";
     public static final String HISTORYLIST="historyList";
     public static final String ISINITIALLIST="isInitialList";
+    public final static String FIRSTPOSITION="firstPosition";
 
 //    public static final int DEFAULT_TEXT_COLOR=Color.BLACK;
 //    int textColor=DEFAULT_TEXT_COLOR;
@@ -94,8 +95,11 @@ public class MainActivity extends ListActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putStringArrayList(CURRENTLIST,currentList);
-        outState.putStringArrayList(HISTORYLIST,historyList);
-        outState.putBoolean(ISINITIALLIST,isInitialList);
+        outState.putStringArrayList(HISTORYLIST, historyList);
+        outState.putBoolean(ISINITIALLIST, isInitialList);
+        int firstVisiblePosition= this.getListView().getFirstVisiblePosition();
+        outState.putInt(FIRSTPOSITION, firstVisiblePosition);
+        //Log.d(TAG,"MAIN SaveInstance FirstPosition: "+firstVisiblePosition);
         super.onSaveInstanceState(outState);
     }
 
@@ -114,6 +118,9 @@ public class MainActivity extends ListActivity {
         {
             setTitle(R.string.app_name);
         }
+        int firstVisiblePosition= state.getInt(FIRSTPOSITION);
+        //Log.d(TAG,"MAIN RestoreInstance FirstPosition: "+firstVisiblePosition);
+        this.getListView().setSelectionFromTop(firstVisiblePosition, 0);
     }
 
     @Override
