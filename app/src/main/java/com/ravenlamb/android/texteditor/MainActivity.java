@@ -89,6 +89,21 @@ public class MainActivity extends ListActivity {
             e.printStackTrace();
 
         }
+        Button backButton= (Button) findViewById(R.id.backButton);
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                backButtonPressed(v);
+            }
+        });
+
+        Button homeButton= (Button) findViewById(R.id.homeButton);
+        homeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                homeButtonPressed(v);
+            }
+        });
         //todo read preference, set background, textCOlor, textSize
     }
 
@@ -209,7 +224,7 @@ public class MainActivity extends ListActivity {
             File currFile=new File(dirPath);
             File[] currDirList = currFile.listFiles();
 //            currDirListStr=new String[currDirList.length];
-            currentList=new ArrayList<>();
+            currentList=new ArrayList<String>();
             for(int i=0;i<currDirList.length;i++){
                 currentList.add(currDirList[i].getAbsolutePath());
             }
