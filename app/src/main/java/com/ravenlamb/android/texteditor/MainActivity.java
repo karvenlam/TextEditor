@@ -77,7 +77,7 @@ public class MainActivity extends ListActivity {
 
 //        backButton=(Button)findViewById(R.id.backButton);
 
-        Log.e(TAG, initialList.toString());
+        Log.d(TAG, initialList.toString());
         try{
             //fileListAdapter=new ArrayAdapter<String>(this,R.layout.list_item, R.id.itemView,currDirListStr);
             //String[] test={"1","2"};
@@ -172,11 +172,11 @@ public class MainActivity extends ListActivity {
                     //todo: need to make sure file is not binary
                     String mimeType = getContentResolver().getType(Uri.fromFile(currFile));
                     addRecentFileDirectory(currFile);
-                    Toast.makeText(this,Uri.fromFile(currFile).toString()+" is a "+mimeType+" file",Toast.LENGTH_LONG).show();
+                    //Toast.makeText(this,Uri.fromFile(currFile).toString()+" is a "+mimeType+" file",Toast.LENGTH_LONG).show();
                     Intent intent2= new Intent(this, EditorActivity.class);
                     intent2.putExtra(EditorActivity.FILESTR, item);
                     startActivity(intent2);
-                    Toast.makeText(this,Uri.fromFile(currFile).toString()+" after startactivity",Toast.LENGTH_LONG).show();
+                    //Toast.makeText(this,Uri.fromFile(currFile).toString()+" after startactivity",Toast.LENGTH_LONG).show();
                 }
             }catch (IndexOutOfBoundsException ioobe){
                 Log.e(TAG, "onChildClick IndexOutOfBoundException");

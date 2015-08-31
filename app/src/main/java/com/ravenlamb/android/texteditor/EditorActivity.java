@@ -7,15 +7,21 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -36,6 +42,9 @@ import java.util.SortedMap;
  */
 
 public class EditorActivity extends ListActivity {
+
+
+    public static final String TAG=EditorActivity.class.getName();
 
     public final static String FILESTR="com.ravenlamb.android.texteditor.EditorActivity.FILESTR";
     public final static String FILEPATH="filePath";
@@ -85,10 +94,6 @@ public class EditorActivity extends ListActivity {
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -112,7 +117,7 @@ public class EditorActivity extends ListActivity {
         setTitle(filePath);
 
         int firstVisiblePosition= state.getInt(FIRSTPOSITION);
-        this.getListView().setSelectionFromTop(firstVisiblePosition,0);
+        this.getListView().setSelectionFromTop(firstVisiblePosition, 0);
     }
 
     private void createNewTextFile() {
@@ -152,6 +157,76 @@ public class EditorActivity extends ListActivity {
 
     }
 
+
+
+
+    @Override
+    protected void onListItemClick(ListView l, View v, final int position, long id) {
+        //super.onListItemClick(l, v, position, id);
+        //// TODO: 8/30/2015 if edit is true, edit selected line,
+        Log.d(TAG, "onListItemClick " + position);
+        Toast.makeText(this,"onListItemClick "+v.getId(),Toast.LENGTH_SHORT).show();
+        Log.wtf(TAG,"onListItemClick "+v.getId());
+        View view=(View) getListView().getItemAtPosition(position);
+
+        EditText editText=(EditText) view.findViewById(R.id.itemLine);
+        //editText.setTag(editText.getKeyListener());
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String temp=s.toString();
+                if(temp.contains("\n")){
+                    int newlineIndex=temp.indexOf("\n");
+                    textArrayList.set(position, temp.substring(0,newlineIndex));
+                    textArrayList.add(position+1, temp.substring(newlineIndex+1));
+                }else {
+                    textArrayList.set(position, temp);
+                    Log.d(TAG,"onTextChanged "+temp+" "+position );
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                fileListAdapter.notifyDataSetChanged();
+                Log.d(TAG, "afterTextChanged");
+            }
+        });
+    }
+//    ArrayAdapter
+//    public void insert (T object, int index)
+//
+//    Added in API level 1
+//    Inserts the specified object at the specified index in the array.
+//
+//            Parameters
+//    object	The object to insert into the array.
+//    index	The index at which the object must be inserted.
+//    public void notifyDataSetChanged ()
+//
+//    Added in API level 1
+//    Notifies the attached observers that the underlying data has been changed and any View reflecting the data set should refresh itself.
+//
+//    public void remove (T object)
+//
+//    Added in API level 1
+//    Removes the specified object from the array.
+//
+//            Parameters
+//    object	The object to remove.
+
+
+//    this.getListView().setLongClickable(true);
+//    this.getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
+//        public boolean onItemLongClick(AdapterView<?> parent, View v, int position, long id) {
+//            //Do some
+//            return true;
+//        }
+//    });
 
     private String[] toStringArray(ArrayList<String> temp){
         if(temp==null){
@@ -198,6 +273,7 @@ public class EditorActivity extends ListActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Toast.makeText(this,"settings",Toast.LENGTH_SHORT).show();
             return true;
         }
         if (id == R.id.action_charsets) {
@@ -216,13 +292,12 @@ public class EditorActivity extends ListActivity {
             return true;
         }
         if (id == R.id.action_favorites) {
-            MenuItem favoriteMenuItem= (MenuItem) findViewById(R.id.action_favorites);
-            if(favoriteMenuItem.isChecked()){
+            if(item.isChecked()){
                 removeFromFavorites();
-                favoriteMenuItem.setChecked(false);
+                item.setChecked(false);
             }else{
                 addToFavorites();
-                favoriteMenuItem.setChecked(true);
+                item.setChecked(true);
             }
         }
         //todo binary hex mode, text size
@@ -237,6 +312,40 @@ public class EditorActivity extends ListActivity {
     
     private void removeFromFavorites(){
         //// TODO: 8/27/2015  
+    }
+
+    class LineTextWatcher implements TextWatcher{
+        public int lineNum;
+
+        public LineTextWatcher(int l){
+            lineNum=l;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            Log.d(TAG, "beforeTextChanged");
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            String temp=s.toString();
+            if(temp.contains("\n")){
+                int newlineIndex=temp.indexOf("\n");
+                textArrayList.set(lineNum, temp.substring(0,newlineIndex));
+                textArrayList.add(lineNum+1, temp.substring(newlineIndex+1));
+
+            }else {
+                textArrayList.set(lineNum, temp);
+                Log.d(TAG,"onTextChanged "+temp+" "+lineNum );
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            //fileListAdapter.notifyDataSetChanged();
+            Log.d(TAG, "afterTextChanged");
+        }
     }
 
     class BinaryFileListAdapter extends ArrayAdapter<String>{
@@ -262,7 +371,9 @@ public class EditorActivity extends ListActivity {
             TextView lineNumView= (TextView) row.findViewById(R.id.lineNum);
 
             textview.setText(textArrayList.get(position));
-            lineNumView.setText(String.valueOf(position+1));
+            lineNumView.setText(String.valueOf(position + 1));
+
+            textview.addTextChangedListener(new LineTextWatcher(position));
             //todo set text size
 //            String currentLine=EditorActivity.this.textArrayList.get(position);
 //
