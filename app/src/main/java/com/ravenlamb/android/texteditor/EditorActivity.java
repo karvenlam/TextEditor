@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -52,6 +53,11 @@ public class EditorActivity extends ListActivity {
     public final static String TEXTARRAYLIST="textArrayList";
     public final static String FIRSTPOSITION="firstPosition";
 
+    public final static String ZERO_SPACE="\u200B";
+//    public final static String ZERO_SPACE="\u0008";
+    //\u200B zero width space
+    //\u200D zero width joiner
+
     private String filePath;
     private ArrayList<String> textArrayList;
 
@@ -68,6 +74,18 @@ public class EditorActivity extends ListActivity {
 
 
     ArrayAdapter<String> fileListAdapter;
+
+//    AdapterView.OnItemSelectedListener onItemSelectedListener=new AdapterView.OnItemSelectedListener() {
+//        @Override
+//        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//            Log.d(TAG,"onItemSelected "+position);//never called
+//        }
+//
+//        @Override
+//        public void onNothingSelected(AdapterView<?> parent) {
+//
+//        }
+//    };
 
 
     @Override
@@ -91,7 +109,7 @@ public class EditorActivity extends ListActivity {
         }else {
             readFile();
         }
-
+        //getListView().setOnItemSelectedListener(onItemSelectedListener);
     }
 
 
@@ -323,7 +341,7 @@ public class EditorActivity extends ListActivity {
 
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            Log.d(TAG, "beforeTextChanged");
+            Log.d(TAG, "beforeTextChanged "+s+" "+start+" "+count+" "+after);
 
         }
 
@@ -370,10 +388,25 @@ public class EditorActivity extends ListActivity {
             TextView textview= (TextView) row.findViewById(R.id.itemLine);
             TextView lineNumView= (TextView) row.findViewById(R.id.lineNum);
 
-            textview.setText(textArrayList.get(position));
+            textview.setText(ZERO_SPACE + textArrayList.get(position));
             lineNumView.setText(String.valueOf(position + 1));
 
+            //textview.setHeight(textview.getHeight()/2);
+
             textview.addTextChangedListener(new LineTextWatcher(position));
+
+            textview.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if(hasFocus){
+                        EditText editText=(EditText) v;
+                        Log.d(TAG,"onFocusChange "+editText.getSelectionStart());
+                        if(editText.getSelectionStart()==0){
+                            editText.setSelection(1,1);
+                        }
+                    }
+                }
+            });
             //todo set text size
 //            String currentLine=EditorActivity.this.textArrayList.get(position);
 //
