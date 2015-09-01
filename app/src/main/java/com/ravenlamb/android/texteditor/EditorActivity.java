@@ -185,35 +185,35 @@ public class EditorActivity extends ListActivity {
         Log.d(TAG, "onListItemClick " + position);
         Toast.makeText(this,"onListItemClick "+v.getId(),Toast.LENGTH_SHORT).show();
         Log.wtf(TAG,"onListItemClick "+v.getId());
-        View view=(View) getListView().getItemAtPosition(position);
-
-        EditText editText=(EditText) view.findViewById(R.id.itemLine);
-        //editText.setTag(editText.getKeyListener());
-        editText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String temp=s.toString();
-                if(temp.contains("\n")){
-                    int newlineIndex=temp.indexOf("\n");
-                    textArrayList.set(position, temp.substring(0,newlineIndex));
-                    textArrayList.add(position+1, temp.substring(newlineIndex+1));
-                }else {
-                    textArrayList.set(position, temp);
-                    Log.d(TAG,"onTextChanged "+temp+" "+position );
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                fileListAdapter.notifyDataSetChanged();
-                Log.d(TAG, "afterTextChanged");
-            }
-        });
+//        View view=(View) getListView().getItemAtPosition(position);
+//
+//        EditText editText=(EditText) view.findViewById(R.id.itemLine);
+//        //editText.setTag(editText.getKeyListener());
+//        editText.addTextChangedListener(new TextWatcher() {
+//            @Override
+//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//
+//            }
+//
+//            @Override
+//            public void onTextChanged(CharSequence s, int start, int before, int count) {
+//                String temp=s.toString();
+//                if(temp.contains("\n")){
+//                    int newlineIndex=temp.indexOf("\n");
+//                    textArrayList.set(position, temp.substring(0,newlineIndex));
+//                    textArrayList.add(position+1, temp.substring(newlineIndex+1));
+//                }else {
+//                    textArrayList.set(position, temp);
+//                    Log.d(TAG,"onTextChanged "+temp+" "+position );
+//                }
+//            }
+//
+//            @Override
+//            public void afterTextChanged(Editable s) {
+//                fileListAdapter.notifyDataSetChanged();
+//                Log.d(TAG, "afterTextChanged");
+//            }
+//        });
     }
 //    ArrayAdapter
 //    public void insert (T object, int index)
@@ -351,8 +351,9 @@ public class EditorActivity extends ListActivity {
             if(temp.contains("\n")){
                 int newlineIndex=temp.indexOf("\n");
                 textArrayList.set(lineNum, temp.substring(0,newlineIndex));
-                textArrayList.add(lineNum+1, temp.substring(newlineIndex+1));
-
+                textArrayList.add(lineNum + 1, temp.substring(newlineIndex + 1));
+                fileListAdapter.notifyDataSetChanged();
+                //// TODO: 8/31/2015 move cursor to next line
             }else {
                 textArrayList.set(lineNum, temp);
                 Log.d(TAG,"onTextChanged "+temp+" "+lineNum );

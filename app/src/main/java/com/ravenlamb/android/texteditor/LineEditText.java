@@ -24,6 +24,7 @@ public class LineEditText extends EditText {
     @Override
     protected void onSelectionChanged(int selStart, int selEnd) {
         super.onSelectionChanged(selStart, selEnd);
+        //// TODO: 8/31/2015 don't know what to do yet
     }
 
 
