@@ -393,6 +393,9 @@ public class EditorActivity extends ListActivity {
             lineNumView.setText(String.valueOf(position + 1));
 
             //textview.setHeight(textview.getHeight()/2);
+//            textview.getLineHeight();
+//            textview.getLineSpacingExtra()
+            textview.setHeight(textview.getHeight()-textview.getLineHeight());
 
             textview.addTextChangedListener(new LineTextWatcher(position));
 

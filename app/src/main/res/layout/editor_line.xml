@@ -25,6 +25,7 @@
         android:background="@android:color/white"
         android:textColor="@android:color/black"
         android:gravity="bottom"
+
         android:layout_gravity="bottom|clip_vertical"
         android:id="@+id/itemLine" />
 </LinearLayout>
