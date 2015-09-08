@@ -17,15 +17,15 @@
         android:background="#DDDDDD"
         android:gravity="center_vertical"
         android:id="@+id/lineNum" />
+    <!--<com.ravenlamb.android.texteditor.LineEditText-->
     <com.ravenlamb.android.texteditor.LineEditText
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:text="New Text this is a long \nline of text, so it wraps"
         android:textSize="@dimen/default_font_size"
         android:background="@android:color/white"
         android:textColor="@android:color/black"
         android:gravity="bottom"
-
-        android:layout_gravity="bottom|clip_vertical"
+        android:editable="true"
         android:id="@+id/itemLine" />
 </LinearLayout>
