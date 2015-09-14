@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -42,7 +44,8 @@ import java.util.SortedMap;
  * binary
  */
 
-public class EditorActivity extends ListActivity {
+public class EditorActivity extends ListActivity
+    implements LineEditText.OnInputConnectionInteraction{
 
 
     public static final String TAG=EditorActivity.class.getName();
@@ -53,13 +56,17 @@ public class EditorActivity extends ListActivity {
     public final static String TEXTARRAYLIST="textArrayList";
     public final static String FIRSTPOSITION="firstPosition";
 
-    public final static String ZERO_SPACE="\u200B";
+
+
+
+//    public final static String ZERO_SPACE="\n\n";
 //    public final static String ZERO_SPACE="\u0008";
     //\u200B zero width space
     //\u200D zero width joiner
 
     private String filePath;
     private ArrayList<String> textArrayList;
+    private ListView listView;
 
 //            ISO-8859-1
 //            US-ASCII
@@ -94,6 +101,8 @@ public class EditorActivity extends ListActivity {
         setContentView(R.layout.activity_editor);
         Intent intent =getIntent();
         filePath=intent.getStringExtra(FILESTR);
+
+        listView=getListView();
 
         SortedMap<String, Charset> charsetSortedMap= Charset.availableCharsets();
         Set<String> charsetNames=charsetSortedMap.keySet();
@@ -367,6 +376,21 @@ public class EditorActivity extends ListActivity {
         }
     }
 
+    /**
+     * LineEditText.OnInputConnectionInteraction interface
+     * @param lineNum
+     */
+    @Override
+    public void backspaceAtPositionZero(int lineNum) {
+        //// TODO: 9/13/2015
+    }
+
+    static class ViewHolder {
+        LineEditText vhEditText;
+        TextView vhNumLine;
+//        int vhposition;
+    }
+
     class BinaryFileListAdapter extends ArrayAdapter<String>{
 
         public BinaryFileListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
@@ -376,41 +400,87 @@ public class EditorActivity extends ListActivity {
 
     class TextFileListAdapter extends ArrayAdapter<String>{//just display line numbers all the time
 
+        ViewHolder holder;
+
         public TextFileListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
             super(context, resource, textViewResourceId, objects);
         }
 
 
+
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            LayoutInflater inflater = (LayoutInflater)getApplicationContext().getSystemService
-                    (Context.LAYOUT_INFLATER_SERVICE);
-            View row= inflater.inflate(R.layout.editor_line,null,false);
-            TextView textview= (TextView) row.findViewById(R.id.itemLine);
-            TextView lineNumView= (TextView) row.findViewById(R.id.lineNum);
+//            View row;
+//            row = inflater.inflate(R.layout.editor_line,listView,true);
+//
+//            TextView textview= (EditText) row.findViewById(R.id.itemLine);
+//            TextView lineNumView= (TextView) row.findViewById(R.id.lineNum);
 
-            textview.setText(ZERO_SPACE + textArrayList.get(position));
-            lineNumView.setText(String.valueOf(position + 1));
 
-            //textview.setHeight(textview.getHeight()/2);
-//            textview.getLineHeight();
-//            textview.getLineSpacingExtra()
-            textview.setHeight(textview.getHeight()-textview.getLineHeight());
 
-            textview.addTextChangedListener(new LineTextWatcher(position));
+//            if(convertView == null){
+                LayoutInflater inflater  = (LayoutInflater)getApplicationContext().getSystemService
+                        (Context.LAYOUT_INFLATER_SERVICE);
+                convertView = inflater.inflate(R.layout.editor_line, null);
+                holder = new ViewHolder();
+                holder.vhEditText = (LineEditText) convertView.findViewById(R.id.itemLine);
+                holder.vhNumLine = (TextView) convertView.findViewById(R.id.lineNum);
+                convertView.setTag(holder);
+//            }else{
+//                holder = (ViewHolder)convertView.getTag();
+//            }
 
-            textview.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            holder.vhNumLine.setText(String.valueOf(position + 1));
+
+            holder.vhEditText.setText(textArrayList.get(position));
+            holder.vhEditText.lineNum=position;
+
+
+//
+//            holder.vhEditText.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    int lineCnt = holder.vhEditText.getLineCount();
+//                    // Perform any actions you want based on the line count here.
+//                    holder.vhEditText.setHeight(holder.vhEditText.getLineHeight() * (lineCnt - 2));
+//                    Log.d(TAG, "post "+ lineCnt +holder.vhEditText.getText());
+//                }
+//            });
+
+
+//            You will want to look at the android:imeActionId and android:imeOptions attributes, plus the setOnEditorActionListener() method, all on TextView.
+            holder.vhEditText.addTextChangedListener(new LineTextWatcher(position));
+            holder.vhEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
-                    if(hasFocus){
-                        EditText editText=(EditText) v;
-                        Log.d(TAG,"onFocusChange "+editText.getSelectionStart());
-                        if(editText.getSelectionStart()==0){
-                            editText.setSelection(1,1);
+                    if (hasFocus) {=//probably don't need this
+                        EditText editText = (EditText) v;
+                        Log.d(TAG, "onFocusChange " + editText.getSelectionStart()+editText.getText());
+                        if (editText.getSelectionStart() == 0) {
+
                         }
                     }
                 }
             });
+            return convertView;
+
+
+
+
+//            lineNumView.setText(String.valueOf(position + 1));
+//
+//            textview.setText("\n" + textArrayList.get(position) + "\n");
+//            textview.setHeight(textview.getLineHeight() * 2);
+//            textview.setGravity(Gravity.BOTTOM);
+//            Log.d(TAG,"lineHeight "+textview.getHeight()+", "+textview.getWidth()+", "+textview.getLineHeight()+", "+textview.getLineCount());
+
+            //textview.setHeight(textview.getHeight()/2);
+//            textview.getLineHeight();
+//            textview.getLineSpacingExtra()
+            //textview.setHeight(textview.getHeight()-textview.getLineHeight());
+            //int y = (textview.getLineCount() - 1) * textview.getLineHeight(); // the " - 1" should send it to the TOP of the last line, instead of the bottom of the last line
+            //textview.scrollTo(0, y);
+
             //todo set text size
 //            String currentLine=EditorActivity.this.textArrayList.get(position);
 //
@@ -433,8 +503,21 @@ public class EditorActivity extends ListActivity {
 //                    textview.setText(currentFile.getName()+"   ");
 //                }
 //            }
-            return row;
+
+//            textview.addTextChangedListener(new LineTextWatcher(position));
+//            textview.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+//                @Override
+//                public void onFocusChange(View v, boolean hasFocus) {
+//                    if (hasFocus) {
+//                        EditText editText = (EditText) v;
+//                        Log.d(TAG, "onFocusChange " + editText.getSelectionStart());
+//                        if (editText.getSelectionStart() == 0) {
+//                            editText.setSelection(1, 1);
+//                        }
+//                    }
+//                }
+//            });
+//            return row;
         }
     }
-
 }

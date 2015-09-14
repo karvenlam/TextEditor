@@ -3,12 +3,18 @@ package com.ravenlamb.android.texteditor;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
+import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputConnectionWrapper;
 import android.widget.EditText;
 
 /**
  * Created by kl on 8/31/2015.
  */
 public class LineEditText extends EditText {
+    public int lineNum;
+    protected OnInputConnectionInteraction onInputConnectionInteraction;
+
     public LineEditText(Context context) {
         super(context);
     }
@@ -21,11 +27,26 @@ public class LineEditText extends EditText {
         super(context, attrs, defStyleAttr);
     }
 
+    private void init(Context context){
+        onInputConnectionInteraction=(OnInputConnectionInteraction) context;
+    }
 
     @Override
     protected void onSelectionChanged(int selStart, int selEnd) {
         super.onSelectionChanged(selStart, selEnd);
         //// TODO: 8/31/2015 don't know what to do yet
+    }
+
+    private  class EditLineInputConnection extends InputConnectionWrapper {
+        public EditLineInputConnection(InputConnection target, boolean mutable) {
+            super(target, mutable);
+        }
+
+        @Override
+        public boolean sendKeyEvent(KeyEvent event) {
+            return super.sendKeyEvent(event);
+        }
+        
     }
 
 //http://stackoverflow.com/questions/4886858/android-edittext-deletebackspace-key-event
@@ -54,7 +75,9 @@ public class LineEditText extends EditText {
 //
 //    }
 
-
+    public interface OnInputConnectionInteraction{
+        public void backspaceAtPositionZero(int lineNum);
+    }
 
 
 //    @Override
