@@ -453,7 +453,7 @@ public class EditorActivity extends ListActivity
             holder.vhEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
-                    if (hasFocus) {=//probably don't need this
+                    if (hasFocus) {//probably don't need this
                         EditText editText = (EditText) v;
                         Log.d(TAG, "onFocusChange " + editText.getSelectionStart()+editText.getText());
                         if (editText.getSelectionStart() == 0) {

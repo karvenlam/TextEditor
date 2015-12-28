@@ -22,7 +22,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 
@@ -361,6 +366,7 @@ public class MainActivity extends ListActivity {
                 getString(R.string.recent_files_key), num_recent);
     }
 
+    //todo change preferences to files
     private void setCurrentToRecent(String prefFile, String prefKey, int num_recent){
         SharedPreferences sharedPreferences = getSharedPreferences(prefFile, Context.MODE_PRIVATE);
         String tempStr="";
@@ -433,12 +439,44 @@ public class MainActivity extends ListActivity {
         addRecent(newRecentFile.getParent(),getString(R.string.recent_directories_file),
                 getString(R.string.recent_directories_key),num_recent);
 
-        addRecent(newRecentFile.getAbsolutePath(),getString(R.string.recent_files_file),
-                getString(R.string.recent_files_key),num_recent);
+        addRecent(newRecentFile.getAbsolutePath(), getString(R.string.recent_files_file),
+                getString(R.string.recent_files_key), num_recent);
     }
+
 
     /**
      *
+     * @param str the file or directory
+     * @param prefFile the preference file
+     * @param num_recent the maximum number of items kept in recent list
+     */
+    private void addRecent(String str, String prefFile, int num_recent){
+        File file = new File(this.getFilesDir(), prefFile);
+        String output=str+";"+"\n";
+        try {
+            BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line="";
+            int i=1;
+            while ((line = buf.readLine()) != null && i<num_recent) {
+
+                i++;
+            }
+
+
+        }catch (FileNotFoundException fnfe){
+            //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+            fnfe.printStackTrace();
+        }catch (IOException ioe){
+//            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+            ioe.printStackTrace();
+
+        }
+    }
+
+
+
+    /**
+     * //todo change from preferences to files
      * @param str the file or directory
      * @param prefFile the preference file
      * @param prefKey the preference key

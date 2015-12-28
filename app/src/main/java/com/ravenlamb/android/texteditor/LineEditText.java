@@ -3,15 +3,19 @@ package com.ravenlamb.android.texteditor;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.widget.EditText;
+import android.widget.Toast;
 
 /**
  * Created by kl on 8/31/2015.
  */
 public class LineEditText extends EditText {
+    public static final String TAG=LineEditText.class.getName();
+
     public int lineNum;
     protected OnInputConnectionInteraction onInputConnectionInteraction;
 
@@ -35,6 +39,9 @@ public class LineEditText extends EditText {
     protected void onSelectionChanged(int selStart, int selEnd) {
         super.onSelectionChanged(selStart, selEnd);
         //// TODO: 8/31/2015 don't know what to do yet
+        if(selStart==0 && selEnd==0){
+            Log.d(TAG,"zero zero" );
+        }
     }
 
     private  class EditLineInputConnection extends InputConnectionWrapper {
@@ -46,7 +53,7 @@ public class LineEditText extends EditText {
         public boolean sendKeyEvent(KeyEvent event) {
             return super.sendKeyEvent(event);
         }
-        
+
     }
 
 //http://stackoverflow.com/questions/4886858/android-edittext-deletebackspace-key-event
