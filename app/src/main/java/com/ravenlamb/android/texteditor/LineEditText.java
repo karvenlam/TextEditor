@@ -17,6 +17,8 @@ public class LineEditText extends EditText {
     public static final String TAG=LineEditText.class.getName();
 
     public int lineNum;
+    public int selectionStart;
+    public int selectionEnd;
     protected OnInputConnectionInteraction onInputConnectionInteraction;
 
     public LineEditText(Context context) {
@@ -39,6 +41,8 @@ public class LineEditText extends EditText {
     protected void onSelectionChanged(int selStart, int selEnd) {
         super.onSelectionChanged(selStart, selEnd);
         //// TODO: 8/31/2015 don't know what to do yet
+        selectionStart=selStart;
+        selectionEnd=selEnd;
         if(selStart==0 && selEnd==0){
             Log.d(TAG,"zero zero" );
         }

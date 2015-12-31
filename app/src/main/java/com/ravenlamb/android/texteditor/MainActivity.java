@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -48,9 +49,10 @@ public class MainActivity extends ListActivity {
     public static final String ISINITIALLIST="isInitialList";
     public final static String FIRSTPOSITION="firstPosition";
 
-//    public static final int DEFAULT_TEXT_COLOR=Color.BLACK;
-//    int textColor=DEFAULT_TEXT_COLOR;
-//    int textSize=12;
+    public static final int DEFAULT_TEXT_COLOR=Color.BLACK;
+    public static final int DEFAULT_BACKGROUND_COLOR=Color.WHITE;
+    int textColor=DEFAULT_TEXT_COLOR;
+    int fontSize=24;
 
     //contains the absolute paths of the directories, but only display file name
     ArrayList<String> initialList;
@@ -109,7 +111,7 @@ public class MainActivity extends ListActivity {
                 homeButtonPressed(v);
             }
         });
-        //todo read preference, set background, textCOlor, textSize
+        //todo read preference, set background, textColor, textSize
     }
 
     @Override
@@ -142,6 +144,15 @@ public class MainActivity extends ListActivity {
         //Log.d(TAG,"MAIN RestoreInstance FirstPosition: "+firstVisiblePosition);
         this.getListView().setSelectionFromTop(firstVisiblePosition, 0);
     }
+
+    private void readPreferences(){
+        String prefFile=getString(R.string.settings_file);
+        SharedPreferences sharedPreferences = getSharedPreferences(prefFile, Context.MODE_PRIVATE);
+        fontSize = sharedPreferences.getInt(getString(R.string.text_size_key),24);
+
+
+    }
+
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -265,7 +276,7 @@ public class MainActivity extends ListActivity {
     }
 
     public void backButtonPressed(View view){
-        //todo if size of history is one and is equal to browse directory...
+        //if size of history is one and is equal to browse directory...
         //historyList size=0 currentList==initialList
         //historyList size=1 go back to initialList
         //historyList size>=3. pop2 add one back
@@ -345,28 +356,32 @@ public class MainActivity extends ListActivity {
     }
 
     private void setCurrentToFavorites(){
-        String favoritePrefFile=getString(R.string.favorites_file);
-        String favoriteNumKey=getString(R.string.num_favorites_key);
-        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
-        int num_favorites=sharedPreferences.getInt(favoriteNumKey,0);
-        setCurrentToRecent(favoritePrefFile,getString(R.string.favorites),num_favorites);
-        //todo, need to sort favorites
+//        String favoritePrefFile=getString(R.string.favorites_file);
+//        String favoriteNumKey=getString(R.string.num_favorites_key);
+//        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
+//        int num_favorites=sharedPreferences.getInt(favoriteNumKey, 0);
+//        setCurrentToRecent(favoritePrefFile,getString(R.string.favorites),num_favorites);
+        setCurrentToRecent(getString(R.string.favorites_text),getResources().getInteger(R.integer.max_favorites) );
+        // sorting favorites in EditorAcitivity.addToFavorites
     }
 
 
     private void setCurrentToRecentDirectories(){
         int num_recent=getResources().getInteger(R.integer.num_recent);
-        setCurrentToRecent(getString(R.string.recent_directories_file),
-                getString(R.string.recent_directories_key), num_recent);
+//        setCurrentToRecent(getString(R.string.recent_directories_file),
+//                getString(R.string.recent_directories_key), num_recent);
+        setCurrentToRecent(getString(R.string.recent_directories_text), num_recent);
+
     }
 
     private void setCurrentToRecentFiles(){
         int num_recent=getResources().getInteger(R.integer.num_recent);
-        setCurrentToRecent(getString(R.string.recent_files_file),
-                getString(R.string.recent_files_key), num_recent);
+//        setCurrentToRecent(getString(R.string.recent_files_file),
+//                getString(R.string.recent_files_key), num_recent);
+        setCurrentToRecent(getString(R.string.recent_files_text), num_recent);
     }
 
-    //todo change preferences to files
+
     private void setCurrentToRecent(String prefFile, String prefKey, int num_recent){
         SharedPreferences sharedPreferences = getSharedPreferences(prefFile, Context.MODE_PRIVATE);
         String tempStr="";
@@ -377,6 +392,35 @@ public class MainActivity extends ListActivity {
             if(tempStr !=null && tempStr.length()>0){
                 currentList.add(tempStr);
             }
+        }
+    }
+
+    private void setCurrentToRecent(String prefFile, int num_recent){
+        File file = new File(this.getFilesDir(), prefFile);
+        currentList=new ArrayList<String>();
+        try {
+
+            if(file.exists()) {
+                BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                String line = "";
+                int i = 1;
+                String tempStr = "";
+                while ((line = buf.readLine()) != null && i < num_recent) {
+                    Log.d(TAG, "read: " + line);
+                    tempStr = line.substring(0, line.indexOf(";"));
+                    if (tempStr != null && tempStr.length() > 0) {
+                        currentList.add(tempStr);
+                    }
+                    i++;
+                }
+            }
+        }catch (FileNotFoundException fnfe){
+            //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+            fnfe.printStackTrace();
+        }catch (IOException ioe){
+//            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+            ioe.printStackTrace();
+
         }
     }
 
@@ -436,11 +480,15 @@ public class MainActivity extends ListActivity {
      */
     private void addRecentFileDirectory(File newRecentFile){
         int num_recent=getResources().getInteger(R.integer.num_recent);
-        addRecent(newRecentFile.getParent(),getString(R.string.recent_directories_file),
-                getString(R.string.recent_directories_key),num_recent);
+//        addRecent(newRecentFile.getParent(),getString(R.string.recent_directories_file),
+//                getString(R.string.recent_directories_key),num_recent);
+//
+//        addRecent(newRecentFile.getAbsolutePath(), getString(R.string.recent_files_file),
+//                getString(R.string.recent_files_key), num_recent);
 
-        addRecent(newRecentFile.getAbsolutePath(), getString(R.string.recent_files_file),
-                getString(R.string.recent_files_key), num_recent);
+
+        addRecent(newRecentFile.getParent(),getString(R.string.recent_directories_text), num_recent);
+        addRecent(newRecentFile.getAbsolutePath(),getString(R.string.recent_files_text), num_recent);
     }
 
 
@@ -452,17 +500,34 @@ public class MainActivity extends ListActivity {
      */
     private void addRecent(String str, String prefFile, int num_recent){
         File file = new File(this.getFilesDir(), prefFile);
-        String output=str+";"+"\n";
+        FileOutputStream outputStream;
+        StringBuilder builder= new StringBuilder();
+        String curr=str+";";
+        boolean currExists=false;
         try {
-            BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-            String line="";
-            int i=1;
-            while ((line = buf.readLine()) != null && i<num_recent) {
-
-                i++;
+            if(file.exists()) {
+                BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                String line = "";
+                int i = 1;
+                while ((line = buf.readLine()) != null && i < num_recent) {
+                    if(!line.contains(curr)) {
+                        builder.append(line);
+                        builder.append("\n");
+                    }else{
+                        currExists=true;
+                        builder.insert(0,line);
+                        builder.append("\n");
+                    }
+                    i++;
+                }
             }
-
-
+            if(!currExists){
+                builder.insert(0,curr+"\n");
+            }
+            Log.d(TAG, "out: "+builder.toString());
+            outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
+            outputStream.write(builder.toString().getBytes());
+            outputStream.close();
         }catch (FileNotFoundException fnfe){
             //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
             fnfe.printStackTrace();
@@ -476,7 +541,7 @@ public class MainActivity extends ListActivity {
 
 
     /**
-     * //todo change from preferences to files
+     * //changed from preferences to files
      * @param str the file or directory
      * @param prefFile the preference file
      * @param prefKey the preference key
@@ -530,7 +595,13 @@ public class MainActivity extends ListActivity {
         if (id == R.id.action_settings) {
             return true;
         }
-        //todo new directory and text size
+        if (id == R.id.action_smallerText){
+
+        }
+        if (id == R.id.action_largerText){
+
+        }
+        //todo new directory and text size, clean favorites(remove non-existing files)
         return super.onOptionsItemSelected(item);
     }
 

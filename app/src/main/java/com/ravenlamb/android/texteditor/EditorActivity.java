@@ -26,15 +26,19 @@ import android.widget.Toast;
 import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeSet;
 
 /**
  * have multiple ArrayAdapter, or multiple style files,
@@ -45,18 +49,16 @@ import java.util.SortedMap;
  */
 
 public class EditorActivity extends ListActivity
-    implements LineEditText.OnInputConnectionInteraction{
+    implements LineEditText.OnInputConnectionInteraction {
 
 
-    public static final String TAG=EditorActivity.class.getName();
+    public static final String TAG = EditorActivity.class.getName();
 
-    public final static String FILESTR="com.ravenlamb.android.texteditor.EditorActivity.FILESTR";
-    public final static String FILEPATH="filePath";
-    public final static String CURRCHARSET="currCharSet";
-    public final static String TEXTARRAYLIST="textArrayList";
-    public final static String FIRSTPOSITION="firstPosition";
-
-
+    public final static String FILESTR = "com.ravenlamb.android.texteditor.EditorActivity.FILESTR";
+    public final static String FILEPATH = "filePath";
+    public final static String CURRCHARSET = "currCharSet";
+    public final static String TEXTARRAYLIST = "textArrayList";
+    public final static String FIRSTPOSITION = "firstPosition";
 
 
 //    public final static String ZERO_SPACE="\n\n";
@@ -68,16 +70,16 @@ public class EditorActivity extends ListActivity
     private ArrayList<String> textArrayList;
     private ListView listView;
 
-//            ISO-8859-1
+    //            ISO-8859-1
 //            US-ASCII
 //            UTF-16
 //            UTF-16BE
 //            UTF-16LE
 //            UTF-8
-    boolean displayAsBinary=false;
-    String currCharset="US-ASCII";
-    String[] charsetList={"ISO-8859-1", "US-ASCII","UTF-16","UTF-16BE","UTF-16LE","UTF-8"};
-    String saveFilePath="";//todo
+    boolean displayAsBinary = false;
+    String currCharset = "US-ASCII";
+    String[] charsetList = {"ISO-8859-1", "US-ASCII", "UTF-16", "UTF-16BE", "UTF-16LE", "UTF-8"};
+    String saveFilePath = "";//todo
 
 
     ArrayAdapter<String> fileListAdapter;
@@ -99,23 +101,24 @@ public class EditorActivity extends ListActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_editor);
-        Intent intent =getIntent();
-        filePath=intent.getStringExtra(FILESTR);
+        Intent intent = getIntent();
+        filePath = intent.getStringExtra(FILESTR);
 
-        listView=getListView();
+        listView = getListView();
 
-        SortedMap<String, Charset> charsetSortedMap= Charset.availableCharsets();
-        Set<String> charsetNames=charsetSortedMap.keySet();
-        charsetList= charsetNames.toArray(charsetList);
+        SortedMap<String, Charset> charsetSortedMap = Charset.availableCharsets();
+        Set<String> charsetNames = charsetSortedMap.keySet();
+        //todo add recently used charset on top
+        charsetList = charsetNames.toArray(charsetList);
 
-        String settings_file=getString(R.string.settings_file);
-        String text_binary_key=getString(R.string.text_binary_key);
+        String settings_file = getString(R.string.settings_file);
+        String text_binary_key = getString(R.string.text_binary_key);
         SharedPreferences sharedPreferences = getSharedPreferences(settings_file, Context.MODE_PRIVATE);
         String textBinaryDisplay = sharedPreferences.getString(text_binary_key, "text");
-        displayAsBinary= (!textBinaryDisplay.equals("text"));
-        if(filePath==null){
+        displayAsBinary = (!textBinaryDisplay.equals("text"));
+        if (filePath == null) {
             createNewTextFile();
-        }else {
+        } else {
             readFile();
         }
         //getListView().setOnItemSelectedListener(onItemSelectedListener);
@@ -127,56 +130,63 @@ public class EditorActivity extends ListActivity
         outState.putCharSequence(FILEPATH, filePath);
         outState.putCharSequence(CURRCHARSET, currCharset);
         outState.putStringArrayList(TEXTARRAYLIST, textArrayList);
-        int firstVisiblePosition= this.getListView().getFirstVisiblePosition();
-        outState.putInt(FIRSTPOSITION,firstVisiblePosition);
+        int firstVisiblePosition = this.getListView().getFirstVisiblePosition();
+        outState.putInt(FIRSTPOSITION, firstVisiblePosition);
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle state) {
         super.onRestoreInstanceState(state);
-        filePath=state.getString(FILEPATH);
-        currCharset=state.getString(CURRCHARSET);
-        textArrayList=state.getStringArrayList(TEXTARRAYLIST);
+        filePath = state.getString(FILEPATH);
+        currCharset = state.getString(CURRCHARSET);
+        textArrayList = state.getStringArrayList(TEXTARRAYLIST);
 
-        fileListAdapter=new TextFileListAdapter(this,R.layout.editor_line, R.id.itemLine, toStringArray(textArrayList));
+        fileListAdapter = new TextFileListAdapter(this, R.layout.editor_line, R.id.itemLine, toStringArray(textArrayList));
         setListAdapter(fileListAdapter);
         setTitle(filePath);
 
-        int firstVisiblePosition= state.getInt(FIRSTPOSITION);
+        int firstVisiblePosition = state.getInt(FIRSTPOSITION);
         this.getListView().setSelectionFromTop(firstVisiblePosition, 0);
     }
 
-    private void createNewTextFile() {
+    @Override
+    protected void onDestroy() {
+        changeCharset();
+        super.onDestroy();
     }
 
-    private void readFile(){
+    private void createNewTextFile() {
+        //todo
+    }
 
-        if(displayAsBinary){
+    private void readFile() {
+
+        if (displayAsBinary) {
             //todo
-        }else{
+        } else {
             readFileAsText();
         }
     }
 
-    private void readFileAsText(){
+    private void readFileAsText() {
         //todo for large files, use LineNumberReader
         try {
             BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), currCharset));
-            String line="";
-            textArrayList=new ArrayList<String>();
+            String line = "";
+            textArrayList = new ArrayList<String>();
             while ((line = buf.readLine()) != null) {
                 textArrayList.add(line);
             }
 
-            fileListAdapter=new TextFileListAdapter(this,R.layout.editor_line, R.id.itemLine, toStringArray(textArrayList));
+            fileListAdapter = new TextFileListAdapter(this, R.layout.editor_line, R.id.itemLine, toStringArray(textArrayList));
 
             setListAdapter(fileListAdapter);
             setTitle(filePath);
-        }catch (FileNotFoundException fnfe){
+        } catch (FileNotFoundException fnfe) {
             //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
             fnfe.printStackTrace();
-        }catch (IOException ioe){
+        } catch (IOException ioe) {
 //            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
             ioe.printStackTrace();
 
@@ -185,15 +195,13 @@ public class EditorActivity extends ListActivity
     }
 
 
-
-
     @Override
     protected void onListItemClick(ListView l, View v, final int position, long id) {
         //super.onListItemClick(l, v, position, id);
         //// TODO: 8/30/2015 if edit is true, edit selected line,
         Log.d(TAG, "onListItemClick " + position);
-        Toast.makeText(this,"onListItemClick "+v.getId(),Toast.LENGTH_SHORT).show();
-        Log.wtf(TAG,"onListItemClick "+v.getId());
+        Toast.makeText(this, "onListItemClick " + v.getId(), Toast.LENGTH_SHORT).show();
+        Log.wtf(TAG, "onListItemClick " + v.getId());
 //        View view=(View) getListView().getItemAtPosition(position);
 //
 //        EditText editText=(EditText) view.findViewById(R.id.itemLine);
@@ -255,13 +263,13 @@ public class EditorActivity extends ListActivity
 //        }
 //    });
 
-    private String[] toStringArray(ArrayList<String> temp){
-        if(temp==null){
+    private String[] toStringArray(ArrayList<String> temp) {
+        if (temp == null) {
             return null;
         }
-        String[] arr=new String[temp.size()];
-        for(int i=0;i<temp.size();i++){
-            arr[i]=temp.get(i);
+        String[] arr = new String[temp.size()];
+        for (int i = 0; i < temp.size(); i++) {
+            arr[i] = temp.get(i);
         }
         return arr;
     }
@@ -270,25 +278,49 @@ public class EditorActivity extends ListActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_editor, menu);
+        //changed favorites from preferences to file
+//        String favoritePrefFile = getString(R.string.favorites_file);
+//        String favoriteNumKey = getString(R.string.num_favorites_key);
+//        String prefKey=getString(R.string.favorites);
+//        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
+//        int num_favorites = sharedPreferences.getInt(favoriteNumKey, 0);
+//        String tempStr="";
+//        for(int i=0;i<num_favorites;i++){
+//            tempStr = sharedPreferences.getString(prefKey + i, "");
+//            //Toast.makeText(this,"File "+i+" "+tempStr,Toast.LENGTH_SHORT).show();
+//            if(tempStr !=null && tempStr.equals(filePath)){
+//                MenuItem favoriteMenuItem= (MenuItem) findViewById(R.id.action_favorites);
+//                favoriteMenuItem.setChecked(true);
+//                break;
+//            }
+//        }
 
-        String favoritePrefFile=getString(R.string.favorites_file);
-        String favoriteNumKey=getString(R.string.num_favorites_key);
-        String prefKey=getString(R.string.favorites);
-        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
-        int num_favorites=sharedPreferences.getInt(favoriteNumKey, 0);
-        String tempStr="";
-        for(int i=0;i<num_favorites;i++){
-            tempStr = sharedPreferences.getString(prefKey + i, "");
-            //Toast.makeText(this,"File "+i+" "+tempStr,Toast.LENGTH_SHORT).show();
-            if(tempStr !=null && tempStr.equals(filePath)){
-                MenuItem favoriteMenuItem= (MenuItem) findViewById(R.id.action_favorites);
-                favoriteMenuItem.setChecked(true);
-                break;
+        int max_favorites=getResources().getInteger(R.integer.max_favorites);
+        File file = new File(this.getFilesDir(), getString(R.string.favorites_text));
+        try {
+            BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line = "";
+            int i = 1;
+            String tempStr = "";
+            while ((line = buf.readLine()) != null && i < max_favorites) {
+                tempStr = line.substring(0, line.indexOf(";"));
+                if (tempStr != null && tempStr.equals(filePath)) {
+                    MenuItem favoriteMenuItem = (MenuItem) findViewById(R.id.action_favorites);
+                    favoriteMenuItem.setChecked(true);
+                    break;
+                }
+                i++;
             }
+        } catch (FileNotFoundException fnfe) {
+            //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+            fnfe.printStackTrace();
+        } catch (IOException ioe) {
+//            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+            ioe.printStackTrace();
+
         }
         return true;
     }
-
 
 
     @Override
@@ -300,29 +332,29 @@ public class EditorActivity extends ListActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            Toast.makeText(this,"settings",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "settings", Toast.LENGTH_SHORT).show();
             return true;
         }
         if (id == R.id.action_charsets) {
 
-            AlertDialog.Builder builder=new AlertDialog.Builder(this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Select Charset")
                     .setItems(charsetList, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            currCharset=charsetList[which];
+                            currCharset = charsetList[which];
                             readFile();
                         }
                     });
-            AlertDialog dialog=builder.create();
+            AlertDialog dialog = builder.create();
             dialog.show();
             return true;
         }
         if (id == R.id.action_favorites) {
-            if(item.isChecked()){
+            if (item.isChecked()) {
                 removeFromFavorites();
                 item.setChecked(false);
-            }else{
+            } else {
                 addToFavorites();
                 item.setChecked(true);
             }
@@ -332,13 +364,106 @@ public class EditorActivity extends ListActivity
         //todo save
         return super.onOptionsItemSelected(item);
     }
+
+    private void changeCharset() {
+        //todo change charset in recent file, directories and favorites
+        //call on close
+    }
+
     
     private void addToFavorites(){
-        //// TODO: 8/27/2015  
+//        String favoritePrefFile=getString(R.string.favorites_file);
+//        String favoriteNumKey=getString(R.string.num_favorites_key);
+////        String prefKey=getString(R.string.favorites);
+//        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
+//        int num_favorites=sharedPreferences.getInt(favoriteNumKey, 0);
+//        num_favorites++;
+//        SharedPreferences.Editor editor = sharedPreferences.edit();
+//        editor.putInt(favoriteNumKey, num_favorites);
+
+        String prefFile=getString(R.string.favorites_text);
+        File file = new File(this.getFilesDir(), prefFile);
+        FileOutputStream outputStream;
+
+        HashMap<String,String> favoritesPairs;
+        favoritesPairs = new HashMap<String, String>();
+
+        String curr=filePath+";";
+        boolean currExists=false;
+
+        favoritesPairs.put(filePath.substring(filePath.lastIndexOf("/")+1), curr+currCharset+"\n");
+        try {
+            if(file.exists()) {
+                BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                String line = "";
+                int i = 1;
+                while ((line = buf.readLine()) != null) {
+                    if(!line.contains(curr)) {
+                        favoritesPairs.put(line.substring(line.lastIndexOf("/") + 1, line.indexOf(";")), line);
+                    }
+                    i++;
+                }
+            }
+
+            TreeSet<String> treeset = new TreeSet<String>(favoritesPairs.keySet());
+            StringBuilder builder=new StringBuilder();
+
+            for (String treekey : treeset) {
+                builder.append(favoritesPairs.get(treekey));
+                builder.append("\n");
+            }
+            outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
+            outputStream.write(builder.toString().getBytes());
+            outputStream.close();
+        }catch (FileNotFoundException fnfe){
+            //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+            fnfe.printStackTrace();
+        }catch (IOException ioe){
+//            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+            ioe.printStackTrace();
+
+        }
     }
     
     private void removeFromFavorites(){
-        //// TODO: 8/27/2015  
+//        String favoritePrefFile=getString(R.string.favorites_file);
+//        String favoriteNumKey=getString(R.string.num_favorites_key);
+////        String prefKey=getString(R.string.favorites);
+//        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
+//        int num_favorites=sharedPreferences.getInt(favoriteNumKey, 0);
+//        num_favorites=(num_favorites>0)?num_favorites-1:0;
+//        SharedPreferences.Editor editor = sharedPreferences.edit();
+//        editor.putInt(favoriteNumKey, num_favorites);
+
+        String prefFile=getString(R.string.favorites_text);
+        File file = new File(this.getFilesDir(), prefFile);
+        FileOutputStream outputStream;
+        StringBuilder builder=new StringBuilder();
+
+        try {
+            BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line="";
+            int i=1;
+            String search=filePath+";";
+            while ((line = buf.readLine()) != null ) {
+                if(line.indexOf(search)==-1){
+                    builder.append(line);
+                    builder.append("\n");
+                }
+                i++;
+            }
+
+            outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
+            outputStream.write(builder.toString().getBytes());
+            outputStream.close();
+        }catch (FileNotFoundException fnfe){
+            //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+            fnfe.printStackTrace();
+        }catch (IOException ioe){
+//            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+            ioe.printStackTrace();
+
+        }
     }
 
     class LineTextWatcher implements TextWatcher{
@@ -453,7 +578,7 @@ public class EditorActivity extends ListActivity
             holder.vhEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
-                    if (hasFocus) {//probably don't need this
+                    if (hasFocus) {//todo probably don't need this
                         EditText editText = (EditText) v;
                         Log.d(TAG, "onFocusChange " + editText.getSelectionStart()+editText.getText());
                         if (editText.getSelectionStart() == 0) {
