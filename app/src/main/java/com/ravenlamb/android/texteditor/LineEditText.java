@@ -2,6 +2,7 @@ package com.ravenlamb.android.texteditor;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -19,6 +20,8 @@ public class LineEditText extends EditText {
     public int lineNum;
     public int selectionStart;
     public int selectionEnd;
+    public TextWatcher textWatcher;
+
     protected OnInputConnectionInteraction onInputConnectionInteraction;
 
     public LineEditText(Context context) {
@@ -35,6 +38,15 @@ public class LineEditText extends EditText {
 
     private void init(Context context){
         onInputConnectionInteraction=(OnInputConnectionInteraction) context;
+    }
+
+    @Override
+    public void addTextChangedListener(TextWatcher watcher) {
+        if(textWatcher!=null){
+            removeTextChangedListener(textWatcher);
+        }
+        textWatcher=watcher;
+        super.addTextChangedListener(watcher);
     }
 
     @Override
