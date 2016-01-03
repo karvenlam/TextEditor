@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -59,6 +60,9 @@ public class EditorActivity extends ListActivity
     public final static String CURRCHARSET = "currCharSet";
     public final static String TEXTARRAYLIST = "textArrayList";
     public final static String FIRSTPOSITION = "firstPosition";
+
+
+    public final static String[] FREQ_CHARSET = {"ISO-8859-1", "US-ASCII", "UTF-16", "UTF-16BE", "UTF-16LE", "UTF-8"};
 
 
 //    public final static String ZERO_SPACE="\n\n";
@@ -105,11 +109,6 @@ public class EditorActivity extends ListActivity
         filePath = intent.getStringExtra(FILESTR);
 
         listView = getListView();
-
-        SortedMap<String, Charset> charsetSortedMap = Charset.availableCharsets();
-        Set<String> charsetNames = charsetSortedMap.keySet();
-        //todo add recently used charset on top
-        charsetList = charsetNames.toArray(charsetList);
 
         String settings_file = getString(R.string.settings_file);
         String text_binary_key = getString(R.string.text_binary_key);
@@ -172,6 +171,9 @@ public class EditorActivity extends ListActivity
     private void readFileAsText() {
         //todo for large files, use LineNumberReader
         try {
+
+            readCharset();
+
             BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), currCharset));
             String line = "";
             textArrayList = new ArrayList<String>();
@@ -191,9 +193,12 @@ public class EditorActivity extends ListActivity
             ioe.printStackTrace();
 
         }
-
     }
 
+    private void readCharset(){
+        // TODO: 12/30/2015 readCharset
+
+    }
 
     @Override
     protected void onListItemClick(ListView l, View v, final int position, long id) {
@@ -337,6 +342,13 @@ public class EditorActivity extends ListActivity
         }
         if (id == R.id.action_charsets) {
 
+
+            SortedMap<String, Charset> charsetSortedMap = Charset.availableCharsets();
+            ArrayList<String> charsetNames = new ArrayList<String>();
+            charsetNames.addAll(Arrays.asList(FREQ_CHARSET));
+            charsetNames.addAll(charsetSortedMap.keySet());
+            charsetList = charsetNames.toArray(charsetList);
+
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Select Charset")
                     .setItems(charsetList, new DialogInterface.OnClickListener() {
@@ -367,9 +379,47 @@ public class EditorActivity extends ListActivity
 
     private void changeCharset() {
         //todo change charset in recent file, directories and favorites
-        //call on close
+        changeCharset(getString(R.string.favorites_text), filePath);
+        changeCharset(getString(R.string.recent_files_text), filePath);
+        changeCharset(getString(R.string.recent_directories_text), filePath.substring(0,filePath.lastIndexOf("/")+1));
     }
 
+    private void changeCharset(String prefFile, String str){
+        File file = new File(this.getFilesDir(), prefFile);
+        FileOutputStream outputStream;
+        StringBuilder builder= new StringBuilder();
+        String curr=str+";";
+        try {
+            if(file.exists()) {
+                BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                String line = "";
+                int i = 1;
+                while ((line = buf.readLine()) != null) {
+                    if(!line.contains(curr)) {
+                        builder.append(line);
+                        builder.append("\n");
+                    }else{
+                        builder.append(curr);
+                        builder.append(currCharset);
+                        builder.append("\n");
+                    }
+                    i++;
+                }
+            }
+            Log.d(TAG, "out: "+builder.toString());
+            outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
+            outputStream.write(builder.toString().getBytes());
+            outputStream.close();
+        }catch (FileNotFoundException fnfe){
+            //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+            fnfe.printStackTrace();
+        }catch (IOException ioe){
+//            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+            ioe.printStackTrace();
+
+        }
+
+    }
     
     private void addToFavorites(){
 //        String favoritePrefFile=getString(R.string.favorites_file);
@@ -475,29 +525,31 @@ public class EditorActivity extends ListActivity
 
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            Log.d(TAG, "beforeTextChanged "+s+" "+start+" "+count+" "+after);
+            //Log.d(TAG, "beforeTextChanged "+s+" "+start+" "+count+" "+after);
 
         }
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             String temp=s.toString();
-            if(temp.contains("\n")){
+//            if(temp.contains("\n")){
                 int newlineIndex=temp.indexOf("\n");
-                textArrayList.set(lineNum, temp.substring(0,newlineIndex));
-                textArrayList.add(lineNum + 1, temp.substring(newlineIndex + 1));
-                fileListAdapter.notifyDataSetChanged();
-                //// TODO: 8/31/2015 move cursor to next line
-            }else {
-                textArrayList.set(lineNum, temp);
-                Log.d(TAG,"onTextChanged "+temp+" "+lineNum );
-            }
+                Log.d("TAG","ontextchange"+lineNum+" "+newlineIndex+" "+temp);
+//                //textArrayList.set(lineNum, temp.substring(0,newlineIndex));
+//                //textArrayList.add(lineNum + 1, temp.substring(newlineIndex + 1));
+//                fileListAdapter.notifyDataSetChanged();
+//                //// TODO: 8/31/2015 move cursor to next line
+//            }else {
+//                Log.d("TAG","ontextchange"+lineNum+" "+temp);
+//                //textArrayList.set(lineNum, temp);
+//                //Log.d(TAG,"onTextChanged "+temp+" "+lineNum );
+//            }
         }
 
         @Override
         public void afterTextChanged(Editable s) {
             //fileListAdapter.notifyDataSetChanged();
-            Log.d(TAG, "afterTextChanged");
+            Log.d(TAG, "afterTextChanged"+lineNum+" "+s.toString());
         }
     }
 
@@ -510,7 +562,7 @@ public class EditorActivity extends ListActivity
         //// TODO: 9/13/2015
     }
 
-    static class ViewHolder {
+    static class ViewHolder {//might not need this
         LineEditText vhEditText;
         TextView vhNumLine;
 //        int vhposition;
@@ -525,41 +577,82 @@ public class EditorActivity extends ListActivity
 
     class TextFileListAdapter extends ArrayAdapter<String>{//just display line numbers all the time
 
-        ViewHolder holder;
+        //ViewHolder holder;
 
         public TextFileListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
             super(context, resource, textViewResourceId, objects);
         }
 
 
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+            if(convertView == null) {
+                LayoutInflater inflater = (LayoutInflater) getApplicationContext().getSystemService
+                        (Context.LAYOUT_INFLATER_SERVICE);
+                convertView = inflater.inflate(R.layout.editor_line, null);
+            }
+
+
+            LineEditText vhEditText = (LineEditText) convertView.findViewById(R.id.itemLine);
+            TextView vhNumLine = (TextView) convertView.findViewById(R.id.lineNum);
+
+            String text=textArrayList.get(position);
+
+            Log.d(TAG,position+" "+text+" "+textArrayList.toString());
+            vhEditText.setText(text);
+            vhEditText.lineNum=position;
+
+            vhNumLine.setText(String.valueOf(position + 1));
+
+            //since view is being reused by android, this editText would be attached to multiple TextWatcher
+            //to solve this, override addTextCHangedListener to remove previous TextWatcher
+            vhEditText.addTextChangedListener(new LineTextWatcher(position));
+            vhEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {//todo probably don't need this
+                        EditText editText = (EditText) v;
+                        Log.d(TAG, "onFocusChange " + editText.getSelectionStart() + editText.getText());
+                        if (editText.getSelectionStart() == 0) {
+
+                        }
+                    }
+                }
+            });
+
+            return convertView;
+        }
+
+        //@Override might not need this
+        public View getView1(int position, View convertView, ViewGroup parent) {
 //            View row;
 //            row = inflater.inflate(R.layout.editor_line,listView,true);
 //
 //            TextView textview= (EditText) row.findViewById(R.id.itemLine);
 //            TextView lineNumView= (TextView) row.findViewById(R.id.lineNum);
 
+            ViewHolder holder;
 
-
-//            if(convertView == null){
+            if(convertView == null){
                 LayoutInflater inflater  = (LayoutInflater)getApplicationContext().getSystemService
                         (Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.editor_line, null);
                 holder = new ViewHolder();
+//                holder.vhEditText = (LineEditText) convertView.findViewById(R.id.itemLine);
+//                holder.vhNumLine = (TextView) convertView.findViewById(R.id.lineNum);
+                convertView.setTag(holder);
+            }else{
+//                convertView.setTag(holder);
+                holder = (ViewHolder) convertView.getTag();
+            }
+
                 holder.vhEditText = (LineEditText) convertView.findViewById(R.id.itemLine);
                 holder.vhNumLine = (TextView) convertView.findViewById(R.id.lineNum);
-                convertView.setTag(holder);
-//            }else{
-//                holder = (ViewHolder)convertView.getTag();
-//            }
-
-            holder.vhNumLine.setText(String.valueOf(position + 1));
 
             holder.vhEditText.setText(textArrayList.get(position));
             holder.vhEditText.lineNum=position;
 
+            holder.vhNumLine.setText(String.valueOf(position + 1));
 
 //
 //            holder.vhEditText.post(new Runnable() {
@@ -643,6 +736,6 @@ public class EditorActivity extends ListActivity
 //                }
 //            });
 //            return row;
-        }
+        }//end of getView1, might not need this
     }
 }
