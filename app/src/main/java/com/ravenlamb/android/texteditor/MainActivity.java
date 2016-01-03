@@ -515,14 +515,15 @@ public class MainActivity extends ListActivity {
                         builder.append("\n");
                     }else{
                         currExists=true;
+                        builder.insert(0,"\n");
                         builder.insert(0,line);
-                        builder.append("\n");
                     }
                     i++;
                 }
             }
             if(!currExists){
-                builder.insert(0,curr+"\n");
+                builder.insert(0,"\n");
+                builder.insert(0,curr);
             }
             Log.d(TAG, "out: "+builder.toString());
             outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
