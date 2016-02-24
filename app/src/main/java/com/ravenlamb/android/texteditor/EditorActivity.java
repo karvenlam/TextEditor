@@ -121,6 +121,8 @@ public class EditorActivity extends ListActivity
         String textBinaryDisplay = sharedPreferences.getString(text_binary_key, "text");
         displayAsBinary = (!textBinaryDisplay.equals("text"));
 
+        readCharset();
+
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
@@ -183,12 +185,13 @@ public class EditorActivity extends ListActivity
         //todo for large files, use LineNumberReader
         try {
 
-            readCharset();
             BufferedReader buf;
             try {
                 buf = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), currCharset));
+                Log.d(TAG,"readFile: "+currCharset);
             }catch(UnsupportedEncodingException uee){
                 buf = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+                Log.d(TAG,"readFile UnsupportedEncodingException: "+currCharset);
             }
             String line = "";
             textArrayList = new ArrayList<String>();
@@ -357,14 +360,17 @@ public class EditorActivity extends ListActivity
             ArrayList<String> charsetNames = new ArrayList<String>();
             charsetNames.addAll(Arrays.asList(FREQ_CHARSET));
             charsetNames.addAll(charsetSortedMap.keySet());
+            int selectedInd=charsetNames.indexOf(currCharset);
             charsetList = charsetNames.toArray(charsetList);
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Select Charset")
-                    .setSingleChoiceItems(charsetList, -1, new DialogInterface.OnClickListener() {
+                    .setSingleChoiceItems(charsetList, selectedInd, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             currCharset = charsetList[which];
+
+                            Log.d(TAG, "choose charset: "+currCharset+" "+EditorActivity.this.currCharset);
                             readFile();
 
                         }
@@ -460,11 +466,12 @@ public class EditorActivity extends ListActivity
                     String line = "";
                     int i = 1;
                     while ((line = buf.readLine()) != null) {
-                        if (!line.contains(filePath)) {
+                        if (line.contains(filePath)) {
                             //todo read
                             int ind=line.indexOf(";");
                             if(ind >-1 && ind < line.length()-1) {
                                 currCharset = line.substring(ind+1);
+                                Log.d(TAG,"readCharset: "+prefFile+" "+currCharset);
                                 return;
                             }
                         }
@@ -488,11 +495,12 @@ public class EditorActivity extends ListActivity
                 String line = "";
                 int i = 1;
                 while ((line = buf.readLine()) != null) {
-                    if (!line.contains(filePath)) {
+                    if (line.contains(filePath)) {
                         //todo read
                         int ind=line.indexOf(";");
                         if(ind >-1 && ind < line.length()-1) {
                             currCharset = line.substring(ind+1);
+                            Log.d(TAG,"readCharset: directory "+currCharset);
                             return;
                         }
                     }
