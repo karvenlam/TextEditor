@@ -6,10 +6,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,6 +34,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,7 +65,7 @@ public class EditorActivity extends ListActivity
     public final static String FIRSTPOSITION = "firstPosition";
 
 
-    public final static String[] FREQ_CHARSET = {"ISO-8859-1", "US-ASCII", "UTF-16", "UTF-16BE", "UTF-16LE", "UTF-8"};
+    public final static String[] FREQ_CHARSET = {"ISO-8859-1", "US-ASCII", "UTF-16", "UTF-16BE", "UTF-16LE", "UTF-8", "GBK", "HZ-GB-2312", "GB18030", "Big5"};
 
 
 //    public final static String ZERO_SPACE="\n\n";
@@ -83,6 +86,8 @@ public class EditorActivity extends ListActivity
     boolean displayAsBinary = false;
     String currCharset = "US-ASCII";
     String[] charsetList = {"ISO-8859-1", "US-ASCII", "UTF-16", "UTF-16BE", "UTF-16LE", "UTF-8"};
+    int dialogWidth=400;
+    int dialogHeight=600;
     String saveFilePath = "";//todo
 
 
@@ -115,6 +120,12 @@ public class EditorActivity extends ListActivity
         SharedPreferences sharedPreferences = getSharedPreferences(settings_file, Context.MODE_PRIVATE);
         String textBinaryDisplay = sharedPreferences.getString(text_binary_key, "text");
         displayAsBinary = (!textBinaryDisplay.equals("text"));
+
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        dialogWidth = size.x/2;
+        dialogHeight = size.y*2/3;
         if (filePath == null) {
             createNewTextFile();
         } else {
@@ -173,8 +184,12 @@ public class EditorActivity extends ListActivity
         try {
 
             readCharset();
-
-            BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), currCharset));
+            BufferedReader buf;
+            try {
+                buf = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), currCharset));
+            }catch(UnsupportedEncodingException uee){
+                buf = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+            }
             String line = "";
             textArrayList = new ArrayList<String>();
             while ((line = buf.readLine()) != null) {
@@ -193,11 +208,6 @@ public class EditorActivity extends ListActivity
             ioe.printStackTrace();
 
         }
-    }
-
-    private void readCharset(){
-        // TODO: 12/30/2015 readCharset
-
     }
 
     @Override
@@ -351,15 +361,32 @@ public class EditorActivity extends ListActivity
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Select Charset")
-                    .setItems(charsetList, new DialogInterface.OnClickListener() {
+                    .setSingleChoiceItems(charsetList, -1, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             currCharset = charsetList[which];
                             readFile();
+
+                        }
+                    })
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
                         }
                     });
+
+//            .setItems(charsetList, new DialogInterface.OnClickListener() {
+//                @Override
+//                public void onClick(DialogInterface dialog, int which) {
+//                    currCharset = charsetList[which];
+//                    readFile();
+//
+//                }
+//            })
             AlertDialog dialog = builder.create();
             dialog.show();
+            dialog.getWindow().setLayout(dialogWidth,dialogHeight);
             return true;
         }
         if (id == R.id.action_favorites) {
@@ -420,7 +447,68 @@ public class EditorActivity extends ListActivity
         }
 
     }
-    
+
+
+    private void readCharset(){
+        // TODO: 12/30/2015 readCharset
+        String[] prefFiles= {getString(R.string.favorites_text),getString(R.string.recent_files_text)};
+        for(String prefFile:prefFiles) {
+            File file = new File(this.getFilesDir(), prefFile);
+            try {
+                if (file.exists()) {
+                    BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                    String line = "";
+                    int i = 1;
+                    while ((line = buf.readLine()) != null) {
+                        if (!line.contains(filePath)) {
+                            //todo read
+                            int ind=line.indexOf(";");
+                            if(ind >-1 && ind < line.length()-1) {
+                                currCharset = line.substring(ind+1);
+                                return;
+                            }
+                        }
+                        i++;
+                    }
+                }
+            } catch (FileNotFoundException fnfe) {
+                //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+                fnfe.printStackTrace();
+            } catch (IOException ioe) {
+                //            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+                ioe.printStackTrace();
+
+            }
+        }
+        //todo ,getString(R.string.recent_directories_text)
+        File file = new File(this.getFilesDir(), getString(R.string.recent_directories_text));
+        try {
+            if (file.exists()) {
+                BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                String line = "";
+                int i = 1;
+                while ((line = buf.readLine()) != null) {
+                    if (!line.contains(filePath)) {
+                        //todo read
+                        int ind=line.indexOf(";");
+                        if(ind >-1 && ind < line.length()-1) {
+                            currCharset = line.substring(ind+1);
+                            return;
+                        }
+                    }
+                    i++;
+                }
+            }
+        } catch (FileNotFoundException fnfe) {
+            //Toast.makeText(this, "Cannot read file. File does not exist.", Toast.LENGTH_SHORT).show();
+            fnfe.printStackTrace();
+        } catch (IOException ioe) {
+            //            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
+            ioe.printStackTrace();
+
+        }
+    }
+
     private void addToFavorites(){
 //        String favoritePrefFile=getString(R.string.favorites_file);
 //        String favoriteNumKey=getString(R.string.num_favorites_key);
