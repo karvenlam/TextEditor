@@ -414,10 +414,15 @@ public class EditorActivity extends ListActivity
         //todo change charset in recent file, directories and favorites
         changeCharset(getString(R.string.favorites_text), filePath);
         changeCharset(getString(R.string.recent_files_text), filePath);
-        changeCharset(getString(R.string.recent_directories_text), filePath.substring(0,filePath.lastIndexOf("/")+1));
+        if(filePath.lastIndexOf("/")-1 < 1){
+            return;
+        }
+        String fileDir=filePath.substring(0,filePath.lastIndexOf("/"));
+        changeCharset(getString(R.string.recent_directories_text), fileDir);
     }
 
     private void changeCharset(String prefFile, String str){
+        Log.d(TAG, "changeCharset: "+prefFile+" "+str);
         File file = new File(this.getFilesDir(), prefFile);
         FileOutputStream outputStream;
         StringBuilder builder= new StringBuilder();
@@ -439,7 +444,7 @@ public class EditorActivity extends ListActivity
                     i++;
                 }
             }
-            Log.d(TAG, "out: "+builder.toString());
+            Log.d(TAG, "changeCharset: "+builder.toString());
             outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
             outputStream.write(builder.toString().getBytes());
             outputStream.close();
@@ -494,8 +499,12 @@ public class EditorActivity extends ListActivity
                 BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
                 String line = "";
                 int i = 1;
+                if(filePath.lastIndexOf("/")-1 < 1){
+                    return;
+                }
+                String fileDir=filePath.substring(0,filePath.lastIndexOf("/"));
                 while ((line = buf.readLine()) != null) {
-                    if (line.contains(filePath)) {
+                    if (line.contains(fileDir)) {
                         //todo read
                         int ind=line.indexOf(";");
                         if(ind >-1 && ind < line.length()-1) {
