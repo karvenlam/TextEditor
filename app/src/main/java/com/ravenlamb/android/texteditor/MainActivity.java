@@ -1,7 +1,9 @@
 package com.ravenlamb.android.texteditor;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -29,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 
 
@@ -62,6 +65,7 @@ public class MainActivity extends ListActivity {
 
     boolean isInitialList=true;
 
+    AlertDialog randomDialog;
 //    Button backButton;
 
     //New, favorites, default directories, recent directories, recent files
@@ -602,8 +606,45 @@ public class MainActivity extends ListActivity {
         if (id == R.id.action_largerText){
 
         }
+        if(id == R.id.action_random){
+            newRandomDialog();
+//            dialog.getWindow().setLayout(dialogWidth,dialogHeight);
+            return true;
+        }
         //todo new directory and text size, clean favorites(remove non-existing files)
         return super.onOptionsItemSelected(item);
+    }
+
+    private void newRandomDialog(){
+        final int sizeOFList=currentList.size();
+        final SecureRandom random= new SecureRandom();
+        int randomNum=random.nextInt(sizeOFList);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(randomNum+"/"+sizeOFList+"\n"+currentList.get(randomNum))
+                .setPositiveButton("Next", null)
+                .setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        randomDialog = builder.create();
+        randomDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                Button b =  randomDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                b.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int randomNum=random.nextInt(sizeOFList);
+                        randomDialog.setTitle(randomNum+"/"+sizeOFList+"\n"+currentList.get(randomNum));
+                    }
+                });
+            }
+        });
+        randomDialog.show();
+
     }
 
     /* Checks if external storage is available for read and write */

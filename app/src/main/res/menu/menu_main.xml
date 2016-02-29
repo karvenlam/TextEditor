@@ -11,4 +11,6 @@
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_clean" android:title="@string/action_clean"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_random" android:title="@string/action_random"
+        android:orderInCategory="100" app:showAsAction="never" />
 </menu>

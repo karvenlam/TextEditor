@@ -126,7 +126,7 @@ public class EditorActivity extends ListActivity
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
-        dialogWidth = size.x/2;
+        dialogWidth = size.x*2/3;
         dialogHeight = size.y*2/3;
         if (filePath == null) {
             createNewTextFile();
