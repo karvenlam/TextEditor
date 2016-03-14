@@ -12,6 +12,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,7 +53,7 @@ public class MainActivity extends ListActivity {
     public static final String CURRENTLIST="currentList";
     public static final String HISTORYLIST="historyList";
     public static final String ISINITIALLIST="isInitialList";
-    public final static String FIRSTPOSITION="firstPosition";
+    public static final String FIRSTPOSITION="firstPosition";
 
     public static final int DEFAULT_TEXT_COLOR=Color.BLACK;
     public static final int DEFAULT_BACKGROUND_COLOR=Color.WHITE;
@@ -61,6 +64,7 @@ public class MainActivity extends ListActivity {
     ArrayList<String> initialList;
     ArrayList<String> currentList;
     ArrayList<String> historyList;//keep the directory path it is displaying
+    ArrayList<String> filteredList;
     ArrayAdapter<String> fileListAdapter;
 
     boolean isInitialList=true;
@@ -113,6 +117,29 @@ public class MainActivity extends ListActivity {
             @Override
             public void onClick(View v) {
                 homeButtonPressed(v);
+            }
+        });
+
+        EditText searchText=(EditText) findViewById(R.id.autocompleteEditText);
+        searchText.addTextChangedListener(new TextWatcher() {
+            public String previousSearchText="";
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                //// TODO: 3/5/2016 if s is longer than 2 characters,
+                // stop previous async, start new thread or async task
+                // if previous async filter  string is contained in the new string,
+                // use the filtered list, otherwise, restart from currDir
+                // s is shorter than 3, set back to currentList
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
             }
         });
         //todo read preference, set background, textColor, textSize
@@ -692,6 +719,8 @@ public class MainActivity extends ListActivity {
             View row= inflater.inflate(R.layout.list_item,null,false);
             TextView textview= (TextView) row.findViewById(R.id.itemView);
             //todo set text size
+
+            //todo filterList
             String currentFilePath=MainActivity.this.currentList.get(position);
             if(isInitialList) {
                 textview.setText(currentFilePath);

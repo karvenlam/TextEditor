@@ -522,8 +522,8 @@ public class EditorActivity extends ListActivity
         } catch (IOException ioe) {
             //            Toast.makeText(this, "IO Error reading file.", Toast.LENGTH_SHORT).show();
             ioe.printStackTrace();
-
         }
+        //todo guess charset and compare to directory charset
     }
 
     private void addToFavorites(){
