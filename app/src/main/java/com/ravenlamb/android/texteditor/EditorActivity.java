@@ -175,7 +175,7 @@ public class EditorActivity extends ListActivity
     private void readFile() {
 
         if (displayAsBinary) {
-            //todo
+            //todo also offer to open file on other app
         } else {
             readFileAsText();
         }
@@ -321,6 +321,7 @@ public class EditorActivity extends ListActivity
             int i = 1;
             String tempStr = "";
             while ((line = buf.readLine()) != null && i < max_favorites) {
+                Log.d(TAG, "onCreateOptionsMenu Read: " + line);
                 tempStr = line.substring(0, line.indexOf(";"));
                 if (tempStr != null && tempStr.equals(filePath)) {
                     MenuItem favoriteMenuItem = (MenuItem) findViewById(R.id.action_favorites);
@@ -567,6 +568,7 @@ public class EditorActivity extends ListActivity
                 builder.append(favoritesPairs.get(treekey));
                 builder.append("\n");
             }
+            Log.d(TAG, "addToFavorites: "+builder.toString());
             outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
             outputStream.write(builder.toString().getBytes());
             outputStream.close();
@@ -608,6 +610,7 @@ public class EditorActivity extends ListActivity
                 i++;
             }
 
+            Log.d(TAG, "removeFromFavorites: "+builder.toString());
             outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
             outputStream.write(builder.toString().getBytes());
             outputStream.close();

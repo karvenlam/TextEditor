@@ -38,10 +38,10 @@ public class UnicodeCharsets {
      * @return list of most probable charsets
      */
     public static String[] returnStringCharCodes(String input, String language){
-
+        return null;
     }
 
     public static String returnCharLanguage(char c){//override with string
-
+        return "";
     }
 }
