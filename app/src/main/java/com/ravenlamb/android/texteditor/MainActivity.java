@@ -73,6 +73,11 @@ public class MainActivity extends ListActivity {
     AlertDialog randomDialog;
 //    Button backButton;
 
+    String currentSearchText="";
+    String previousSearchText="";
+    FilterTask filterTask;
+
+
 
     //New, favorites, default directories, recent directories, recent files
 
@@ -125,7 +130,6 @@ public class MainActivity extends ListActivity {
 
         EditText searchText=(EditText) findViewById(R.id.autocompleteEditText);
         searchText.addTextChangedListener(new TextWatcher() {
-            public String previousSearchText="";
 
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -133,17 +137,31 @@ public class MainActivity extends ListActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                //// TODO: 3/5/2016 if s is longer than 2 characters,
-                // stop previous async, start new thread or async task
-                // if previous async filter  string is contained in the new string,
-                // use the filtered list, otherwise, restart from currDir
-                // s is shorter than 2, set back to currentList
+                if(isInitialList){
+                    return;
+                }
+                //shorter than two characters, and no previous search
+                if(previousSearchText.length()==0 && s.length()<2){
+                    Log.d(TAG,"onTextChanged Return "+s.toString());
+                    return;
+                }
+                //search string is longer than 2 characters, and no previous search
                 if(previousSearchText.length()==0 && s.length()>=2){
-                    //scroll to top
-                }else if(s.length()>previousSearchText.length() && s.toString().indexOf(previousSearchText)>=0){
-
-                }else{
-                    //scroll to top
+                    Log.d(TAG,"onTextChanged Start "+s.toString());
+                    MainActivity.this.getListView().setSelectionFromTop(0,0); //scroll to top
+                    currentSearchText=s.toString();
+                    filterTask=new FilterTask();
+                    filterTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,currentSearchText);
+                }else{//there is a previous search
+                    Log.d(TAG,"onTextChanged Continue "+s.toString());
+                    currentSearchText=s.toString();
+                    if(filterTask.getStatus()== AsyncTask.Status.FINISHED){
+                        Log.d(TAG,"onTextChanged Continue Task FINISHED");
+                        filterCheck();
+                    }else{
+                        Log.d(TAG,"onTextChanged Continue Task NOT FINISHED");
+                        filterTask.cancel(true);
+                    }
                 }
             }
 
@@ -154,6 +172,74 @@ public class MainActivity extends ListActivity {
         });
         //todo read preference, set background, textColor, textSize
     }
+
+
+    private void filterCheck(){
+        if(currentSearchText.contains(previousSearchText)){
+            Log.d(TAG,"filterCheck 1 "+previousSearchText+" "+currentSearchText);
+            fileListAdapter.notifyDataSetChanged();
+            filterTask=new FilterTask();
+            filterTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, currentSearchText);
+        }else{
+            Log.d(TAG, "filterCheck 2 " + previousSearchText + " " + currentSearchText);
+            resetCurrentDirectory();
+            if(currentSearchText.length()<2){
+                previousSearchText="";
+                fileListAdapter.notifyDataSetChanged();
+                return;
+            }
+            filterTask=new FilterTask();
+            filterTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, currentSearchText);
+        }
+
+    }
+
+    class FilterTask extends AsyncTask<String, Void, Integer>{
+        public FilterTask() {
+            super();
+        }
+
+        //to cancel task, call filterTask.cancel(true); then isCancelled returns true
+        @Override
+        protected Integer doInBackground(String... params) {
+            if(params[0]==null){
+                return null;
+            }
+            String filterString=params[0].toLowerCase();
+            Log.d(TAG,"doInBackground "+filterString);
+            previousSearchText=filterString;
+            //// TODO: 3/13/2016
+            //loop through currentList, remove items not containing filter
+            //check isCancelled. break out of loop if true
+            int currSize=currentList.size();
+            for(int i=currSize-1;i>=0;i--){
+                String temp=currentList.get(i);
+                if(!temp.toLowerCase().contains(filterString)){
+                    currentList.remove(temp);
+                }
+                if(isCancelled()){
+                    return 1;
+                }
+            }
+            Log.d(TAG,"doInBackground completes");
+            return 1;
+        }
+
+        @Override
+        protected void onCancelled() {
+            Log.d(TAG,"onCancelled()");
+            filterCheck();
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            Log.d(TAG, "onPostExecute(integer)");
+            loadCurrentListToAdapter();
+            fileListAdapter.notifyDataSetChanged();
+        }
+    }
+
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -201,7 +287,8 @@ public class MainActivity extends ListActivity {
         //super.onListItemClick(l, v, position, id);
 
         //todo check and stop FilterTask And SearchTask
-        String item=currentList.get(position);
+//        String item=currentList.get(position);
+        String item=fileListAdapter.getItem(position);
         if(isInitialList){
 
             if(item.equalsIgnoreCase(NEW_FILE)){
@@ -276,10 +363,45 @@ public class MainActivity extends ListActivity {
     private void processNewDirectory(String filePath){
         historyList.add(filePath);
         //historyIndex++;
-        refreshNavigationList(filePath);
+        readDirectory(filePath);
     }
 
-    private void refreshNavigationList(String dirPath){
+    private void resetCurrentDirectory(){
+        if(isInitialList){
+            currentList=(ArrayList<String>)initialList.clone();
+            fileListAdapter.clear();
+            fileListAdapter.addAll(currentList);
+            return;
+        }
+        int historySize=historyList.size();
+
+        String item=historyList.get(historySize - 1);
+        if(item.equalsIgnoreCase(FAVORTIES)){
+            //Toast.makeText(this,"Favorites clicked",Toast.LENGTH_SHORT).show();
+            isInitialList=false;
+            setCurrentToFavorites();
+            setTitle(FAVORTIES);
+        }else if(item.equalsIgnoreCase(BROWSE_DIRECTORIES)){
+            //Toast.makeText(this,"browse clicked",Toast.LENGTH_SHORT).show();
+            isInitialList=false;
+            setCurrentToBrowseDirectories();
+            setTitle(BROWSE_DIRECTORIES);
+        }else if(item.equalsIgnoreCase(RECENT_DIRECTORIES)){
+            isInitialList=false;
+            setCurrentToRecentDirectories();
+            setTitle(RECENT_DIRECTORIES);
+        }else if(item.equalsIgnoreCase(RECENT_FILES)){
+            isInitialList=false;
+            setCurrentToRecentFiles();
+            setTitle(RECENT_FILES);
+        }else{
+            readDirectory(item);
+            return;
+        }
+        loadCurrentListToAdapter();
+    }
+
+    private void readDirectory(String dirPath){
 
         //if(historyIndex>1){
 //        if(historyList.size()>1){
@@ -300,14 +422,18 @@ public class MainActivity extends ListActivity {
 //            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, currentList);
 //            setListAdapter(fileListAdapter);
 
-            fileListAdapter.clear();
-            fileListAdapter.addAll(currentList);
             setTitle(currFile.getAbsolutePath());
-            fileListAdapter.notifyDataSetChanged();
+            loadCurrentListToAdapter();
         }catch (Exception e){
             e.printStackTrace();
 
         }
+    }
+
+    private void loadCurrentListToAdapter(){
+        fileListAdapter.clear();
+        fileListAdapter.addAll(currentList);
+        fileListAdapter.notifyDataSetChanged();
     }
 
     /**
@@ -391,7 +517,7 @@ public class MainActivity extends ListActivity {
 //            String item=historyList.remove(historySize-2);
 //            processNewDirectory(item);
             String item=historyList.get(historySize-2);
-            refreshNavigationList(item);
+            readDirectory(item);
         }
 
     }
@@ -748,25 +874,12 @@ public class MainActivity extends ListActivity {
         return arr;
     }
 
-    class FilterTask extends AsyncTask<String, Integer, Integer>{
-        public FilterTask() {
-            super();
-        }
-
-        //to cancel task, call filterTask.cancel(true); then isCancelled returns true
-        @Override
-        protected Integer doInBackground(String... params) {
-            String filterString=params[0];
-            //// TODO: 3/13/2016
-            //loop through currentList, remove items not containing filter
-            //check isCancelled. break out of loop if true
-
-            return null;
-        }
-    }
 
 
     class NavigationListAdapter extends ArrayAdapter<String> {
+
+        LayoutInflater mInflator;
+
 //        public NavigationListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
 //            super(context, resource, textViewResourceId, objects);
 //        }
@@ -775,6 +888,8 @@ public class MainActivity extends ListActivity {
         //so that ArrayAdapter.remove can be used by filter and search
         public NavigationListAdapter(Context context, int resource, List<String> objects) {
             super(context, resource, objects);
+            mInflator = (LayoutInflater)getApplicationContext().getSystemService
+                    (Context.LAYOUT_INFLATER_SERVICE);
         }
 
         @Override
@@ -784,10 +899,14 @@ public class MainActivity extends ListActivity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            LayoutInflater inflater = (LayoutInflater)getApplicationContext().getSystemService
-                    (Context.LAYOUT_INFLATER_SERVICE);
-            View row= inflater.inflate(R.layout.list_item,null,false);
-            TextView textview= (TextView) row.findViewById(R.id.itemView);
+            TextView textview;
+            if(convertView==null) {
+                convertView = mInflator.inflate(R.layout.list_item, null, false);
+                textview = (TextView) convertView.findViewById(R.id.itemView);
+                convertView.setTag(textview);
+            }else{
+                textview=(TextView)convertView.getTag();
+            }
             //todo set text size
 
             //todo filterList
@@ -797,6 +916,10 @@ public class MainActivity extends ListActivity {
                 textview.setText(currentFilePath);
                 textview.setTextColor(Color.BLACK);
             }else{
+                String currentDirectory=historyList.get(historyList.size()-1)+"/";
+                if(historyList.size()<2){
+                    currentDirectory="";
+                }
                 File currentFile= new File(currentFilePath);
                 textview.setTextColor(Color.BLACK);
                 if(!currentFile.canWrite()){
@@ -807,12 +930,13 @@ public class MainActivity extends ListActivity {
                     }
                 }
                 if(currentFile.isDirectory()){
-                    textview.setText(currentFile.getName()+"/   ");
+//                    textview.setText(currentFile.getName() + "/   ");
+                    textview.setText(currentFilePath.substring(currentDirectory.length()) + "/   ");
                 }else{
-                    textview.setText(currentFile.getName()+"   ");
+                    textview.setText(currentFilePath.substring(currentDirectory.length())+"   ");
                 }
             }
-            return row;
+            return convertView;
         }
     }
 }
