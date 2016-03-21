@@ -554,7 +554,7 @@ public class EditorActivity extends ListActivity
                 String line = "";
                 int i = 1;
                 while ((line = buf.readLine()) != null) {
-                    if(!line.contains(curr)) {
+                    if(!line.contains(curr) && line.trim().length()>0) {
                         favoritesPairs.put(line.substring(line.lastIndexOf("/") + 1, line.indexOf(";")), line);
                     }
                     i++;
@@ -566,7 +566,6 @@ public class EditorActivity extends ListActivity
 
             for (String treekey : treeset) {
                 builder.append(favoritesPairs.get(treekey));
-                builder.append("\n");
             }
             Log.d(TAG, "addToFavorites: "+builder.toString());
             outputStream=openFileOutput(prefFile, Context.MODE_PRIVATE);
@@ -603,8 +602,8 @@ public class EditorActivity extends ListActivity
             int i=1;
             String search=filePath+";";
             while ((line = buf.readLine()) != null ) {
-                if(line.indexOf(search)==-1){
-                    builder.append(line);
+                if(line.indexOf(search)==-1 && line.trim().length()>0){
+                    builder.append(line.trim());
                     builder.append("\n");
                 }
                 i++;
