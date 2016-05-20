@@ -21,8 +21,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:onClick="homeButtonPressed"
             android:text="&#x2302;"/>
+        <!--android:onClick="homeButtonPressed"-->
             <!--android:text="&#x2302;"/>-->
 
 
@@ -32,8 +32,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:onClick="backButtonPressed"
             android:text="&lt;"/>
+        <!--android:onClick="backButtonPressed"-->
             <!--android:text="&#x2039;"/>-->
 
         <EditText
@@ -49,6 +49,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="0"
             android:text="3"/>
+        <!--android:onClick="searchButtonPressed"-->
             <!--android:text="&#x1F50D;"/>-->
 
     </LinearLayout>

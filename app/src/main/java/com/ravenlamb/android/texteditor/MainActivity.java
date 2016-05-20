@@ -76,6 +76,9 @@ public class MainActivity extends ListActivity {
     String currentSearchText="";
     String previousSearchText="";
     FilterTask filterTask;
+    boolean searchPressed=false;
+    boolean searchCompleted=false;
+    ArrayList<String> filterDirList;
 
 
 
@@ -97,14 +100,9 @@ public class MainActivity extends ListActivity {
         currentList=(ArrayList<String>)initialList.clone();
         historyList=new ArrayList<String>();
 
-//        backButton=(Button)findViewById(R.id.backButton);
 
         Log.d(TAG, initialList.toString());
         try{
-            //fileListAdapter=new ArrayAdapter<String>(this,R.layout.list_item, R.id.itemView,currDirListStr);
-            //String[] test={"1","2"};
-//            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, (String[])initialList.toArray());
-//            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
             fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, currentList);
             setListAdapter(fileListAdapter);
             setTitle(R.string.app_name);
@@ -128,6 +126,14 @@ public class MainActivity extends ListActivity {
             }
         });
 
+        Button searchButton = (Button) findViewById(R.id.searchButton);
+        searchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                searchButtonPressed(v);
+            }
+        });
+
         EditText searchText=(EditText) findViewById(R.id.autocompleteEditText);
         searchText.addTextChangedListener(new TextWatcher() {
 
@@ -140,16 +146,17 @@ public class MainActivity extends ListActivity {
                 if(isInitialList){
                     return;
                 }
-                //shorter than two characters, and no previous search
-                if(previousSearchText.length()==0 && s.length()<2){
+                //search button not pressed, shorter than two characters, and no previous search
+                if(!searchPressed && previousSearchText.length()==0 && s.length()<2){
                     Log.d(TAG,"onTextChanged Return "+s.toString());
                     return;
                 }
-                //search string is longer than 2 characters, and no previous search
-                if(previousSearchText.length()==0 && s.length()>=2){
+                //search string is longer than 2 characters, and (no previous search or search button pressed)
+                if(previousSearchText.length()==0 && (s.length()>=2 || searchPressed)) {
                     Log.d(TAG,"onTextChanged Start "+s.toString());
                     MainActivity.this.getListView().setSelectionFromTop(0,0); //scroll to top
                     currentSearchText=s.toString();
+                    filterDirList=new ArrayList<String>();
                     filterTask=new FilterTask();
                     filterTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,currentSearchText);
                 }else{//there is a previous search
@@ -183,6 +190,7 @@ public class MainActivity extends ListActivity {
         }else{
             Log.d(TAG, "filterCheck 2 " + previousSearchText + " " + currentSearchText);
             resetCurrentDirectory();
+            filterDirList=new ArrayList<String>();
             if(currentSearchText.length()<2){
                 previousSearchText="";
                 fileListAdapter.notifyDataSetChanged();
@@ -206,19 +214,51 @@ public class MainActivity extends ListActivity {
                 return null;
             }
             String filterString=params[0].toLowerCase();
-            Log.d(TAG,"doInBackground "+filterString);
-            previousSearchText=filterString;
+            Log.d(TAG, "doInBackground " + filterString);
+            previousSearchText = filterString;
             //// TODO: 3/13/2016
             //loop through currentList, remove items not containing filter
             //check isCancelled. break out of loop if true
-            int currSize=currentList.size();
-            for(int i=currSize-1;i>=0;i--){
-                String temp=currentList.get(i);
-                if(!temp.toLowerCase().contains(filterString)){
+            int currSize = currentList.size();
+            for (int i = currSize - 1; i >= 0; i--) {
+                String temp = currentList.get(i);
+                File currFile=new File(temp);
+                if(currFile.isDirectory()){
+                    filterDirList.add(temp);
+                }
+                if (!temp.toLowerCase().contains(filterString)) {
                     currentList.remove(temp);
                 }
-                if(isCancelled()){
+                if (isCancelled()) {
                     return 1;
+                }
+            }
+            if(searchPressed){
+                //// TODO: 5/6/2016 search through filterDirLIst
+                while(filterDirList.size()>0){
+                    String currSearchDir=filterDirList.remove(0);
+                    try{
+                        File currDirFile=new File(currSearchDir);
+                        File[] currDirList = currDirFile.listFiles();
+                        int currentDirectorySize=getCurrentDirectory().length();
+                        for (int i=0;i<currDirList.length;i++) {
+                            String temp=currDirList[i].getAbsolutePath();
+                            if(currDirList[i].isDirectory()){
+                                filterDirList.add(temp);
+                            }
+                            if (temp.substring(currentDirectorySize).toLowerCase().contains(filterString)) {
+                                currentList.add(temp);
+                            }
+                            if (isCancelled()) {
+                                return 1;
+                            }
+                        }
+                        searchCompleted=true;
+                    }catch (Exception e){
+                        e.printStackTrace();
+
+                    }
+
                 }
             }
             Log.d(TAG,"doInBackground completes");
@@ -237,6 +277,28 @@ public class MainActivity extends ListActivity {
             loadCurrentListToAdapter();
             fileListAdapter.notifyDataSetChanged();
         }
+    }
+
+
+    /**
+     * Search from the currentList and their subdirectories for files with match name
+     * @param view
+     */
+    public void searchButtonPressed(View view){
+        // TODO: 4/17/2016
+        //if it is initial list, search from root list
+
+        //append search result to currentList
+        if(isInitialList){
+            // TODO: 5/7/2016 set current directory to root or return
+            return;
+        }
+        searchPressed=true;
+        searchCompleted=false;
+        filterTask=new FilterTask();
+        EditText searchText=(EditText) findViewById(R.id.autocompleteEditText);
+        currentSearchText=searchText.getText().toString();
+        filterTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, currentSearchText);
     }
 
 
@@ -273,6 +335,7 @@ public class MainActivity extends ListActivity {
         this.getListView().setSelectionFromTop(firstVisiblePosition, 0);
     }
 
+    // TODO: 5/6/2016 move to sharepreferences
     private void readPreferences(){
         String prefFile=getString(R.string.settings_file);
         SharedPreferences sharedPreferences = getSharedPreferences(prefFile, Context.MODE_PRIVATE);
@@ -287,6 +350,15 @@ public class MainActivity extends ListActivity {
         //super.onListItemClick(l, v, position, id);
 
         //todo check and stop FilterTask And SearchTask
+
+        if(searchPressed || currentSearchText.length()>0){
+            if(filterTask !=null){
+                filterTask.cancel(true);
+            }
+            searchPressed=false;
+            // TODO: 5/19/2016 all directory change all need to set searchPressed to false 
+        }
+
 //        String item=currentList.get(position);
         String item=fileListAdapter.getItem(position);
         if(isInitialList){
@@ -319,10 +391,7 @@ public class MainActivity extends ListActivity {
                 setTitle(RECENT_FILES);
             }
 
-
-            fileListAdapter.clear();
-            fileListAdapter.addAll(currentList);
-            fileListAdapter.notifyDataSetChanged();
+            loadCurrentListToAdapter();
         }else
         {
             try {
@@ -353,10 +422,6 @@ public class MainActivity extends ListActivity {
             }
         }
 
-//        fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
-//        fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, currentList);
-//        setListAdapter(fileListAdapter);
-//        fileListAdapter.notifyDataSetChanged();
 
     }
 
@@ -368,9 +433,7 @@ public class MainActivity extends ListActivity {
 
     private void resetCurrentDirectory(){
         if(isInitialList){
-            currentList=(ArrayList<String>)initialList.clone();
-            fileListAdapter.clear();
-            fileListAdapter.addAll(currentList);
+            loadHomeDirectory();
             return;
         }
         int historySize=historyList.size();
@@ -403,13 +466,6 @@ public class MainActivity extends ListActivity {
 
     private void readDirectory(String dirPath){
 
-        //if(historyIndex>1){
-//        if(historyList.size()>1){
-//            backButton.setEnabled(true);
-//        }else
-//        {
-//            backButton.setEnabled(false);
-//        }
         try{
             File currFile=new File(dirPath);
             File[] currDirList = currFile.listFiles();
@@ -418,9 +474,6 @@ public class MainActivity extends ListActivity {
             for(int i=0;i<currDirList.length;i++){
                 currentList.add(currDirList[i].getAbsolutePath());
             }
-//            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
-//            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, currentList);
-//            setListAdapter(fileListAdapter);
 
             setTitle(currFile.getAbsolutePath());
             loadCurrentListToAdapter();
@@ -436,31 +489,33 @@ public class MainActivity extends ListActivity {
         fileListAdapter.notifyDataSetChanged();
     }
 
-    /**
-     * Search from the currentList and their subdirectories for files with match name
-     * @param view
-     */
-    public void searchButtonPressed(View view){
-        //if it is initial list, search from root list
 
-        //append search result to currentList
+
+    public void homeButtonPressed(View view){
+        loadHomeDirectory();
+    }
+
+    public void loadHomeDirectory(){
+        isInitialList=true;
+        currentList=(ArrayList<String>)initialList.clone();
+        historyList=new ArrayList<String>();
+
+        setTitle(R.string.app_name);
+        loadCurrentListToAdapter();
 
     }
 
 
-    public void homeButtonPressed(View view){
-        isInitialList=true;
-        currentList=(ArrayList<String>)initialList.clone();
-        historyList=new ArrayList<String>();
-//        fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
-//        fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, currentList);
-//        setListAdapter(fileListAdapter);
-
-
-        fileListAdapter.clear();
-        fileListAdapter.addAll(currentList);
-        setTitle(R.string.app_name);
-        fileListAdapter.notifyDataSetChanged();
+    public String getCurrentDirectory(){
+        // TODO: 5/7/2016 need to save currentDirectory as instance variable, too many reads required for listview
+        String currentDirectory=historyList.get(historyList.size()-1)+"/";
+        if(historyList.size()<2){
+            currentDirectory="";
+        }
+        if(currentDirectory.equals("//")){
+            currentDirectory="/";
+        }
+        return currentDirectory;
     }
 
     public void backButtonPressed(View view){
@@ -472,19 +527,12 @@ public class MainActivity extends ListActivity {
         if(historySize==0) {
             return;
         }else if(historySize==1){
-            isInitialList=true;
-            historyList.remove(0);
-            currentList=(ArrayList<String>)initialList.clone();
-//            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
-//            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, currentList);
-//            setListAdapter(fileListAdapter);
-            fileListAdapter.clear();
-            fileListAdapter.addAll(currentList);
-            setTitle(R.string.app_name);
+            loadHomeDirectory();
 
         }else if(historySize==2){
             historyList.remove(historySize-1);
             String item=historyList.get(historySize - 2);
+
             if(item.equalsIgnoreCase(FAVORTIES)){
                 //Toast.makeText(this,"Favorites clicked",Toast.LENGTH_SHORT).show();
                 isInitialList=false;
@@ -504,12 +552,7 @@ public class MainActivity extends ListActivity {
                 setCurrentToRecentFiles();
                 setTitle(RECENT_FILES);
             }
-            //fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, R.id.itemView, toStringArray(currentList));
-//            fileListAdapter=new NavigationListAdapter(this,R.layout.list_item, currentList);
-//            setListAdapter(fileListAdapter);
-            fileListAdapter.clear();
-            fileListAdapter.addAll(currentList);
-            fileListAdapter.notifyDataSetChanged();
+            loadCurrentListToAdapter();
         }else{
             historyList.remove(historySize-1);
 
@@ -555,11 +598,6 @@ public class MainActivity extends ListActivity {
     }
 
     private void setCurrentToFavorites(){
-//        String favoritePrefFile=getString(R.string.favorites_file);
-//        String favoriteNumKey=getString(R.string.num_favorites_key);
-//        SharedPreferences sharedPreferences = getSharedPreferences(favoritePrefFile, Context.MODE_PRIVATE);
-//        int num_favorites=sharedPreferences.getInt(favoriteNumKey, 0);
-//        setCurrentToRecent(favoritePrefFile,getString(R.string.favorites),num_favorites);
         setCurrentToRecent(getString(R.string.favorites_text),getResources().getInteger(R.integer.max_favorites) );
         // sorting favorites in EditorAcitivity.addToFavorites
     }
@@ -567,16 +605,12 @@ public class MainActivity extends ListActivity {
 
     private void setCurrentToRecentDirectories(){
         int num_recent=getResources().getInteger(R.integer.num_recent);
-//        setCurrentToRecent(getString(R.string.recent_directories_file),
-//                getString(R.string.recent_directories_key), num_recent);
         setCurrentToRecent(getString(R.string.recent_directories_text), num_recent);
 
     }
 
     private void setCurrentToRecentFiles(){
         int num_recent=getResources().getInteger(R.integer.num_recent);
-//        setCurrentToRecent(getString(R.string.recent_files_file),
-//                getString(R.string.recent_files_key), num_recent);
         setCurrentToRecent(getString(R.string.recent_files_text), num_recent);
     }
 
@@ -594,6 +628,8 @@ public class MainActivity extends ListActivity {
         }
     }
 
+
+    // TODO: 5/6/2016 move to sharedpreferences
     private void setCurrentToRecent(String prefFile, int num_recent){
         File file = new File(this.getFilesDir(), prefFile);
         currentList=new ArrayList<String>();
@@ -623,68 +659,14 @@ public class MainActivity extends ListActivity {
         }
     }
 
-//    private void addRecentFileDirectory(File newRecentFile){
-//
-//        String newRecentDir=newRecentFile.getParent();
-//        SharedPreferences sharedPrefDir = getSharedPreferences(getString(R.string.recent_directories_file), Context.MODE_PRIVATE);
-//        int num_recent=getResources().getInteger(R.integer.num_recent);
-//        String tempStr="";
-//        ArrayList<String> tempRecent=new ArrayList<String>(num_recent);
-//        for(int i=0;i<num_recent;i++){
-//            tempStr = sharedPrefDir.getString(getString(R.string.recent_directories_key)+i,"");
-//            if(tempStr.length()>0){
-//                tempRecent.add(tempStr);
-//            }
-//        }
-//        if(tempRecent.indexOf(newRecentDir)>=0){
-//            tempRecent.remove(newRecentDir);
-//            tempRecent.add(0,newRecentDir);
-//        }else{
-//            tempRecent.remove(tempRecent.size()-1);
-//            tempRecent.add(0,newRecentDir);
-//        }
-//        SharedPreferences.Editor sharedPrefDirEdit = sharedPrefDir.edit();
-//        for(int i=0;i<tempRecent.size() && i<num_recent;i++){
-//            sharedPrefDirEdit.putString(getString(R.string.recent_directories_key)+i,tempRecent.get(i));
-//        }
-//        sharedPrefDirEdit.commit();
-//        // add recent file
-//        String newRecentFileStr=newRecentFile.getAbsolutePath();
-//        SharedPreferences sharedPrefFile = getSharedPreferences(getString(R.string.recent_files_file), Context.MODE_PRIVATE);
-//        tempStr="";
-//        tempRecent=new ArrayList<String>(num_recent);
-//        for(int i=0;i<num_recent;i++){
-//            tempStr = sharedPrefFile.getString(getString(R.string.recent_files_key)+i,"");
-//            if(tempStr.length()>0){
-//                tempRecent.add(tempStr);
-//            }
-//        }
-//        if(tempRecent.indexOf(newRecentFileStr)>=0){
-//            tempRecent.remove(newRecentFileStr);
-//            tempRecent.add(0,newRecentFileStr);
-//        }else{
-//            tempRecent.remove(tempRecent.size()-1);
-//            tempRecent.add(0,newRecentFileStr);
-//        }
-//        SharedPreferences.Editor sharedPrefFileEdit = sharedPrefFile.edit();
-//        for(int i=0;i<tempRecent.size() && i<num_recent;i++){
-//            sharedPrefFileEdit.putString(getString(R.string.recent_files_key)+i,tempRecent.get(i));
-//        }
-//        sharedPrefDirEdit.commit();
-//    }
 
     /**
+     // TODO: 5/6/2016 move to sharedpreferences
      * add the selected file and its parent directory to recent lists
      * @param newRecentFile the recent file
      */
     private void addRecentFileDirectory(File newRecentFile){
         int num_recent=getResources().getInteger(R.integer.num_recent);
-//        addRecent(newRecentFile.getParent(),getString(R.string.recent_directories_file),
-//                getString(R.string.recent_directories_key),num_recent);
-//
-//        addRecent(newRecentFile.getAbsolutePath(), getString(R.string.recent_files_file),
-//                getString(R.string.recent_files_key), num_recent);
-
 
         addRecent(newRecentFile.getParent(),getString(R.string.recent_directories_text), num_recent);
         addRecent(newRecentFile.getAbsolutePath(),getString(R.string.recent_files_text), num_recent);
@@ -692,6 +674,7 @@ public class MainActivity extends ListActivity {
 
 
     /**
+     // TODO: 5/6/2016 move to sharedpreferences
      *
      * @param str the file or directory
      * @param prefFile the preference file
@@ -739,40 +722,6 @@ public class MainActivity extends ListActivity {
     }
 
 
-
-//    /**
-//     * //changed from preferences to files
-//     * @param str the file or directory
-//     * @param prefFile the preference file
-//     * @param prefKey the preference key
-//     * @param num_recent the maximum number of items kept in recent list
-//     */
-//    private void addRecent(String str, String prefFile, String prefKey, int num_recent){
-//
-//        SharedPreferences sharedPreferences = getSharedPreferences(prefFile, Context.MODE_PRIVATE);
-//        String tempStr="";
-//        ArrayList<String> tempRecent=new ArrayList<String>(num_recent);
-//        for(int i=0;i<num_recent;i++){
-//            tempStr = sharedPreferences.getString(prefKey+i,"");
-//            if(tempStr != null && tempStr.length()>0){
-//                tempRecent.add(tempStr);
-//            }
-//        }
-//        if(tempRecent.indexOf(str)>=0){
-//            tempRecent.remove(str);
-//            tempRecent.add(0,str);
-//        }else{
-//            if(tempRecent.size()==num_recent) {
-//                tempRecent.remove(tempRecent.size() - 1);
-//            }
-//            tempRecent.add(0,str);
-//        }
-//        SharedPreferences.Editor editor = sharedPreferences.edit();
-//        for(int i=0;i<tempRecent.size() && i<num_recent;i++){
-//            editor.putString(prefKey + i, tempRecent.get(i));
-//        }
-//        editor.apply();
-//    }
 
     //todo onFinish, if this is called by Editor to choose directory, return directory, or file name
     //getParent, call function to set saveFilePath
@@ -880,11 +829,6 @@ public class MainActivity extends ListActivity {
 
         LayoutInflater mInflator;
 
-//        public NavigationListAdapter(Context context, int resource, int textViewResourceId, String[] objects) {
-//            super(context, resource, textViewResourceId, objects);
-//        }
-
-        //// TODO: 3/14/2016 NEED TO TEST THIS CONSTRUCTOR, so currentList can be passed to ArrayAdapter
         //so that ArrayAdapter.remove can be used by filter and search
         public NavigationListAdapter(Context context, int resource, List<String> objects) {
             super(context, resource, objects);
@@ -919,6 +863,8 @@ public class MainActivity extends ListActivity {
                 String currentDirectory=historyList.get(historyList.size()-1)+"/";
                 if(historyList.size()<2){
                     currentDirectory="";
+                }else if(currentFilePath.equals("/")){
+                    currentDirectory="/";
                 }
                 File currentFile= new File(currentFilePath);
                 textview.setTextColor(Color.BLACK);
